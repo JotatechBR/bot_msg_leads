@@ -9,7 +9,9 @@ import { leads } from './google.js';
 
 // ---------------- Configuração ----------------
 const CONTAS_PADRAO = 2;             // quantos WhatsApps enviam ao mesmo tempo (mude com --contas N)
-const PRIMEIRO_INTERVALO = [30, 40]; // segundos: a primeira espera de cada conta fica perto de 30s
+const MENSAGENS_POR_RODADA = 3;      // cada conta manda 3 seguidas, uma por nicho (rodízio entre os nichos)
+const ENTRE_MENSAGENS = [3, 12];     // segundos: pausa curta entre as mensagens de uma mesma rodada
+const PRIMEIRO_INTERVALO = [30, 40]; // segundos: a primeira espera entre rodadas fica perto de 30s
 const INTERVALO = [30, 300];         // segundos: depois, qualquer valor entre 30s e 5min
 const DIFERENCA_MINIMA = 25;         // segundos: uma espera nunca fica parecida com a anterior
 const DIGITANDO = [2.5, 7];          // segundos mostrando "digitando..." antes de enviar
@@ -179,10 +181,10 @@ Roda sem parar até você apertar Ctrl+C.
     if (tipo === 'dividiu') tela.info(`região com muitos resultados, dividida em partes menores (${dado} áreas na fila)`);
   };
 
-  // Fonte única de leads, compartilhada pelas contas: percorre cada cidade x nicho
-  async function* todosOsLeads() {
-    for (const cidade of cidades) {
-      for (const termo of termos) {
+  // Uma fonte de leads por nicho, compartilhada pelas contas: percorre as cidades daquele nicho
+  function criarFonte(termo) {
+    async function* gerar() {
+      for (const cidade of cidades) {
         const chaveBusca = `${termo}|${cidade}`.toLowerCase().replace(/\s+/g, ' ');
         const busca = modoTeste ? structuredClone(historico.buscas[chaveBusca] ?? {}) : (historico.buscas[chaveBusca] ??= {});
         if (busca.esgotada) {
@@ -195,29 +197,61 @@ Roda sem parar até você apertar Ctrl+C.
         tela.secao(`Terminou "${termo}" em ${cidade}`);
       }
     }
+    const gerador = gerar();
+    const fonte = {
+      termo,
+      acabou: false,
+      devolvidos: [], // leads que voltam para a fila (ex.: WhatsApp caiu antes de enviar)
+      async proximo() {
+        if (fonte.devolvidos.length > 0) return fonte.devolvidos.shift();
+        if (fonte.acabou) return null;
+        const { value, done } = await gerador.next();
+        if (done) {
+          fonte.acabou = true;
+          return fonte.devolvidos.shift() ?? null;
+        }
+        return { ...value, nicho: termo };
+      },
+    };
+    return fonte;
   }
-  const gerador = todosOsLeads();
-  const devolvidos = []; // leads que voltam para a fila (ex.: WhatsApp caiu antes de enviar)
-  let fimDosLeads = false;
-  async function proximoLead() {
-    if (devolvidos.length > 0) return devolvidos.shift();
-    if (fimDosLeads) return null;
-    const { value, done } = await gerador.next();
-    if (done) {
-      fimDosLeads = true;
-      return devolvidos.shift() ?? null;
+  const fontes = termos.map(criarFonte);
+  const fontePorNicho = new Map(fontes.map((f) => [f.termo, f]));
+
+  // Monta a próxima rodada: nichos diferentes em rodízio (ponteiro compartilhado entre as contas).
+  // Com 1 nicho: [A, A, A]; com 2: [A, B, A] e depois [B, A, B]; com 3 ou mais: 3 nichos diferentes.
+  let ponteiro = 0;
+  function nichosDaRodada() {
+    const ativas = fontes.filter((f) => !f.acabou || f.devolvidos.length > 0);
+    if (ativas.length === 0) return [];
+    const rodada = [];
+    for (let i = 0; i < MENSAGENS_POR_RODADA; i++) rodada.push(ativas[(ponteiro + i) % ativas.length]);
+    ponteiro = (ponteiro + MENSAGENS_POR_RODADA) % ativas.length;
+    return rodada;
+  }
+
+  // Lead do nicho pedido; se esse nicho acabou, pega de outro que ainda tenha
+  async function proximoLead(preferida) {
+    for (const fonte of [preferida, ...fontes.filter((f) => f !== preferida)]) {
+      const lead = await fonte.proximo();
+      if (lead) return lead;
     }
-    return value;
+    return null;
   }
 
   if (modoTeste) {
-    for (let i = 0; i < 10; i++) {
-      const lead = await proximoLead();
-      if (!lead) break;
-      const numero = normalizarTelefone(lead.telefone);
-      if (!numero) continue;
-      numerosUsados.add(numero);
-      tela.previa(lead, numero, montarMensagem(modelos, lead));
+    for (let r = 1; r <= 2; r++) {
+      tela.secao(`Rodada ${r} (exemplo)`);
+      for (const fonte of nichosDaRodada()) {
+        let lead, numero;
+        do {
+          lead = await proximoLead(fonte);
+          numero = lead && normalizarTelefone(lead.telefone);
+        } while (lead && !numero);
+        if (!lead) break;
+        numerosUsados.add(numero);
+        tela.previa(lead, numero, montarMensagem(modelos, lead));
+      }
     }
     console.log();
     tela.info(`${consultasApi} consulta(s) à API do Google`);
@@ -241,10 +275,11 @@ Roda sem parar até você apertar Ctrl+C.
   }
 
   let encerrando = false;
+  const porNicho = Object.fromEntries(termos.map((t) => [t, 0]));
   const encerrar = (codigo) => {
     encerrando = true;
     salvar();
-    tela.resumo({ contas, inicio, consultasApi });
+    tela.resumo({ contas, inicio, consultasApi, porNicho });
     for (const c of contas) c.sock?.end(undefined);
     process.exit(codigo);
   };
@@ -255,7 +290,7 @@ Roda sem parar até você apertar Ctrl+C.
   });
 
   console.log();
-  tela.info(`Enviando com ${contas.length} conta(s) ao mesmo tempo. Aperte Ctrl+C para parar.`);
+  tela.info(`Enviando com ${contas.length} conta(s) ao mesmo tempo, ${MENSAGENS_POR_RODADA} mensagens por rodada. Aperte Ctrl+C para parar.`);
 
   async function trabalhador(conta) {
     let anterior = null;
@@ -276,13 +311,41 @@ Roda sem parar até você apertar Ctrl+C.
         }
       }
 
-      const lead = await proximoLead();
-      if (!lead) return;
+      const rodada = nichosDaRodada();
+      if (rodada.length === 0) return;
+
+      let enviadasNaRodada = 0;
+      let semLeads = false;
+      for (const fonte of rodada) {
+        if (encerrando || conta.caiu) break;
+        if (enviadasNaRodada > 0) await esperar(sortear(...ENTRE_MENSAGENS));
+        const resultado = await enviarUma(conta, fonte);
+        if (resultado === 'enviado') enviadasNaRodada++;
+        if (resultado === 'sem_leads') {
+          semLeads = true;
+          break;
+        }
+      }
+      if (semLeads && enviadasNaRodada === 0) return;
+      if (conta.caiu) continue; // reconecta já, sem esperar o intervalo
+
+      const intervalo = proximoIntervalo(anterior);
+      anterior = intervalo;
+      tela.fimDaRodada(conta, enviadasNaRodada, intervalo);
+      await esperar(intervalo);
+    }
+  }
+
+  // Envia uma mensagem para uma empresa do nicho; empresas sem WhatsApp são puladas (pega a próxima)
+  async function enviarUma(conta, fonte) {
+    while (!encerrando && !conta.caiu) {
+      const lead = await proximoLead(fonte);
+      if (!lead) return 'sem_leads';
       const numero = normalizarTelefone(lead.telefone);
       if (!numero || jaUsado(lead)) continue;
 
       // Registra ANTES de enviar: mesmo se o programa cair no meio, essa empresa nunca é contatada de novo
-      const registro = { nome: lead.nome, numero, status: 'enviando', conta: conta.id, data: agora() };
+      const registro = { nome: lead.nome, nicho: lead.nicho, numero, status: 'enviando', conta: conta.id, data: agora() };
       historico.empresas[lead.id] = registro;
       numerosUsados.add(numero);
       salvar();
@@ -302,11 +365,11 @@ Roda sem parar até você apertar Ctrl+C.
         // nada foi enviado: libera a empresa para ser tentada de novo
         delete historico.empresas[lead.id];
         numerosUsados.delete(numero);
-        devolvidos.push(lead);
+        fontePorNicho.get(lead.nicho).devolvidos.push(lead);
         salvar();
         tela.envio(conta, 'devolvido', lead, numero, err.message);
         await esperar(15);
-        continue;
+        return 'falhou';
       }
 
       try {
@@ -318,20 +381,19 @@ Roda sem parar até você apertar Ctrl+C.
         registro.data = agora();
         salvar();
         conta.enviadas++;
+        porNicho[lead.nicho] = (porNicho[lead.nicho] ?? 0) + 1;
+        tela.envio(conta, 'enviado', lead, numero);
+        return 'enviado';
       } catch (err) {
         registro.status = 'erro'; // pode ou não ter saído: não tenta de novo para não repetir
         salvar();
         conta.erros++;
         tela.envio(conta, 'erro', lead, numero, err.message);
         await esperar(15);
-        continue;
+        return 'falhou';
       }
-
-      const intervalo = proximoIntervalo(anterior);
-      anterior = intervalo;
-      tela.envio(conta, 'enviado', lead, numero, `próxima em ${tela.formatarTempo(intervalo)}`);
-      await esperar(intervalo);
     }
+    return 'falhou';
   }
 
   try {

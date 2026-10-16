@@ -4,6 +4,7 @@ import { styleText } from 'node:util';
 const cor = (estilo, texto) => styleText(estilo, String(texto));
 const CORES_CONTAS = ['cyan', 'magenta', 'yellow', 'blue', 'green'];
 const LARGURA_NOME = 30;
+const LARGURA_NICHO = 14;
 
 // A libsignal (criptografia do WhatsApp) escreve direto no console a cada troca de chaves
 // ("Closing session: SessionEntry {...}"). É normal e não interessa aqui, então é descartado.
@@ -93,18 +94,26 @@ const STATUS = {
 export function envio(conta, status, lead, numero, detalhe = '') {
   escrever(
     `  ${cor('dim', hora())}  ${rotuloConta(conta)}  ${STATUS[status]()}  ` +
+    `${cor('italic', ajustar(lead.nicho, LARGURA_NICHO))}  ` +
     `${ajustar(lead.nome, LARGURA_NOME)}  ${cor('dim', ajustar(formatarTelefone(numero), 18))}` +
     (detalhe ? `  ${cor('dim', detalhe)}` : ''),
   );
 }
 
+export function fimDaRodada(conta, enviadas, intervalo) {
+  escrever(
+    `  ${cor('dim', hora())}  ${rotuloConta(conta)}  ` +
+    cor('dim', `⏸ rodada com ${enviadas} enviada(s) · próxima rodada em ${formatarTempo(intervalo)}`),
+  );
+}
+
 export function previa(lead, numero, mensagem) {
   escrever();
-  escrever(`  ${cor('bold', lead.nome)}  ${cor('dim', formatarTelefone(numero))}`);
+  escrever(`  ${cor('italic', `[${lead.nicho}]`)} ${cor('bold', lead.nome)}  ${cor('dim', formatarTelefone(numero))}`);
   for (const linha of mensagem.split('\n')) escrever(`  ${cor('dim', '│')} ${linha}`);
 }
 
-export function resumo({ contas, inicio, consultasApi }) {
+export function resumo({ contas, inicio, consultasApi, porNicho }) {
   const total = contas.reduce((s, c) => s + c.enviadas, 0);
   escrever();
   escrever(cor('cyan', `  ──────────────── Resumo ────────────────`));
@@ -116,6 +125,9 @@ export function resumo({ contas, inicio, consultasApi }) {
     );
   }
   escrever(`  ${cor('bold', ajustar('Total', 18))}${cor(['bold', 'green'], total)} enviadas`);
+  for (const [nicho, qtd] of Object.entries(porNicho ?? {})) {
+    escrever(`  ${cor('italic', ajustar(nicho, 18))}${qtd}`);
+  }
   escrever(`  ${cor('dim', ajustar('Consultas à API', 18))}${consultasApi}`);
   escrever();
 }

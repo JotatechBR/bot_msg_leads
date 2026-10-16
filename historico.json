@@ -261,6 +261,84 @@
       "status": "enviado",
       "conta": "wa2",
       "data": "16/10/2026, 19:00:20"
+    },
+    "ChIJc4HBgPfIyJQRep4BTvjgwbg": {
+      "nome": "RONES BARBER SHOP",
+      "numero": "5519981743705",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 19:01:54"
+    },
+    "ChIJbRvKRH63yJQRyOD3wa4s0uY": {
+      "nome": "Barbearia Paraiso",
+      "numero": "5511973230144",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:02:14"
+    },
+    "ChIJwzR02rDGyJQR2bC0NdfYSVI": {
+      "nome": "Dona Bella Beauty Care",
+      "nicho": "salao de beleza",
+      "numero": "551933956083",
+      "status": "sem_whatsapp",
+      "conta": "wa1",
+      "data": "16/10/2026, 19:07:20"
+    },
+    "ChIJnR_rYU_PyJQR5r_bKbijT74": {
+      "nome": "Lolla Loio Beauty Club",
+      "nicho": "salao de beleza",
+      "numero": "551933251290",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:07:20"
+    },
+    "ChIJbwCgQcrIyJQREdeMcwzuRNA": {
+      "nome": "Mademoiselle Espaço da Beleza",
+      "nicho": "salao de beleza",
+      "numero": "5519989877065",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 19:07:26"
+    },
+    "ChIJnQiAEs_OyJQRe91ESF5-KUE": {
+      "nome": "Bellas Beauty Center",
+      "nicho": "salao de beleza",
+      "numero": "551932762882",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:07:20"
+    },
+    "ChIJKTEjo2bIyJQRLgz2wEWtvSE": {
+      "nome": "ESSÊNCIA STUDIO DE BELEZA",
+      "nicho": "salao de beleza",
+      "numero": "551930272990",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:07:24"
+    },
+    "ChIJI_p6myS2yJQRsJ3Glk4SW8g": {
+      "nome": "Pet Shop World Pet | Banho e Tosa World Pet | Pet Shop em Campinas - SP",
+      "nicho": "pet shop",
+      "numero": "5519971183640",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:07:44"
+    },
+    "ChIJm243jTu3yJQRkeMHYjW475k": {
+      "nome": "Patalândia Pet Shop - Unidade Jhon Boyd",
+      "nicho": "pet shop",
+      "numero": "5519989899855",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 19:07:42"
+    },
+    "ChIJR_5J4xvPyJQRAOf5s58FQ7U": {
+      "nome": "Esteticar Estúdio Automotivo",
+      "nicho": "estetica automotiva",
+      "numero": "5519974058602",
+      "status": "enviando",
+      "conta": "wa1",
+      "data": "16/10/2026, 19:07:47"
     }
   },
   "buscas": {
@@ -316,26 +394,6 @@
         }
       ],
       "fila": [
-        {
-          "id": "ChIJc4HBgPfIyJQRep4BTvjgwbg",
-          "nome": "RONES BARBER SHOP",
-          "telefone": "(19) 98174-3705",
-          "rede_social": "https://www.instagram.com/rones_salao_e_barbearia?igsh=MTV4bzA4ZzQ4YnRiaQ==",
-          "endereco": "SHOPPING PARQUE DAS BANDEIRAS - Av. John Boyd Dunlop, 3900 - Lj 2080 - Jardim Ipaussurama, Campinas - SP, 13060-803",
-          "avaliacao": 4.8,
-          "total_avaliacoes": 146,
-          "google_maps": "https://maps.google.com/?cid=13313169330549137018"
-        },
-        {
-          "id": "ChIJbRvKRH63yJQRyOD3wa4s0uY",
-          "nome": "Barbearia Paraiso",
-          "telefone": "(11) 97323-0144",
-          "rede_social": null,
-          "endereco": "Av. Arymana, 769 - Parque Dom Pedro II, Campinas - SP, 13054-440",
-          "avaliacao": 4.9,
-          "total_avaliacoes": 46,
-          "google_maps": "https://maps.google.com/?cid=16632405502922842312"
-        },
         {
           "id": "ChIJdWJv2OXPyJQRsT86XRl_pM0",
           "nome": "Externa Barbearia",
@@ -395,6 +453,283 @@
           "avaliacao": 4.7,
           "total_avaliacoes": 20,
           "google_maps": "https://maps.google.com/?cid=6421754246223934637"
+        }
+      ],
+      "esgotada": false
+    },
+    "salao de beleza|campinas sp": {
+      "areas": [
+        {
+          "low": {
+            "latitude": -23.06121901299138,
+            "longitude": -47.24676706446568
+          },
+          "high": {
+            "latitude": -22.729225023736277,
+            "longitude": -46.81530202716448
+          },
+          "pageToken": "Aa-ngMYFOQYzJju6Rn4MYbodUtkWM6V1yne_rKlJdQmD_aBzfDbbNN1ZE5cf9XYf1IUrrDMmzAne37ek0FY5gunaO9xuWMwvrrZLgQuvhRI2SlV-_2GGscinjD0v4GE6HxgXByU3JPGOwmX7VKfqg4zbRMIs13r1TrTCIb0JiPMaYmWVzD6yAYpR6owNZA31RUiAuW7P2zDXYLwjeKp7i8j8lLyW-jeWZwE091hNQ1eOJDGtyxs182y2hf5maBLV4Wd6IAItOMZZffdUi9nDHj1ptwsZc1sEc5EIEA7kbEJGvkaOAP54q72ia6hzAWTEfvBWyyYvi7ROZLd3e_eWP_qAUKGx_LNIqdqOQSY_DGmW6ueeb62CLcE8YY82ciim5rFMDnJdrQ2-ifH6SQraN5339mhVoVhmHjsp5PFHFSz2ubKDABRrsAilgXK4mlGBw03LqOfX8-Q0aqu1cOsUtg-ILpfNDYPqsBujRlrOT3ScQhwpn5-_9m4Vy8OwZQ6N5t8DbY-cNAbPMPRgEJ957cbEVgp-20lknMBI3kiq6oEBosSaCyi5nNIyrfpCgzeEy431dKVzJ0H-SieaLhr01lQkTyOqza03tSNxMyreir8tGKTvNr1s4umXg3N-dG6wei2MvHa5GYi3HOvmIlXHsCkzEuVuNruMoypnAehbzZ1Md_PXj2U2iyi68clgOvgPaqTQxTrhg5nyI9msra6Uti3yMuflejZyl70rKn4UsJFN8M4gCil3L5Pa-grUqg3oHN2XI4y8l2vbHMLYlRhJOMwvIfT27ckYRZ9MnnpcbMxYPW1IwF8tsJt8AvORkqJ4TrccYItZvoSeVL7A",
+          "brutos": 20
+        }
+      ],
+      "fila": [
+        {
+          "id": "ChIJE-3voD_JyJQRnwauBK1GVxM",
+          "nome": "Elaine espaço da Beleza",
+          "telefone": "(19) 99697-2992",
+          "rede_social": null,
+          "endereco": "R. Irmã Dulce, 76 - Vila Uniao (Zona Leste), Campinas - SP, 13060-745",
+          "avaliacao": 5,
+          "total_avaliacoes": 204,
+          "google_maps": "https://maps.google.com/?cid=1393660318616258207"
+        },
+        {
+          "id": "ChIJyTVUbPnFyJQR0yAr3FMXTwA",
+          "nome": "Tatiane Trindade Beauty House",
+          "telefone": "(19) 98821-7010",
+          "rede_social": "https://instagram.com/espacotatianetrindade?igshid=YmMyMTA2M2Y=",
+          "endereco": "R. Dr. Plínio Barreto, 45 - Taquaral, Campinas - SP, 13076-590",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 67,
+          "google_maps": "https://maps.google.com/?cid=22262172103680211"
+        },
+        {
+          "id": "ChIJvbxxvRvPyJQRZn_R32q6QqM",
+          "nome": "Claudia Nascimento Espaço da beleza",
+          "telefone": "(19) 98284-7861",
+          "rede_social": null,
+          "endereco": "Av. Baden Powell, 518 - Jardim Nova Europa, Campinas - SP, 13040-093",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 31,
+          "google_maps": "https://maps.google.com/?cid=11764170144829505382"
+        },
+        {
+          "id": "ChIJu_iXmW3PyJQR2LsUyEkn2pM",
+          "nome": "Stein & Kais",
+          "telefone": "(19) 99212-0077",
+          "rede_social": null,
+          "endereco": "Av. Dr. Hermas Braga, 99 - Nova Campinas, Campinas - SP, 13092-133",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 156,
+          "google_maps": "https://maps.google.com/?cid=10653871066341227480"
+        },
+        {
+          "id": "ChIJq00fGsrOyJQRbbYVSCPa3aw",
+          "nome": "Michelle Centro de Beleza",
+          "telefone": "(19) 98763-2634",
+          "rede_social": null,
+          "endereco": "Av. Baden Powell, 891 - Jardim Nova Europa, Campinas - SP, 13040-093",
+          "avaliacao": 4.6,
+          "total_avaliacoes": 84,
+          "google_maps": "https://maps.google.com/?cid=12456351989444753005"
+        },
+        {
+          "id": "ChIJT78LIBfGyJQRigwcv7mR9X4",
+          "nome": "Spasso de Beleza Tereza",
+          "telefone": "(19) 3241-3407",
+          "rede_social": null,
+          "endereco": "R. Paulo Afonso Proença Passarinho, 93 - Jardim Chapadão, Campinas - SP, 13070-165",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 65,
+          "google_maps": "https://maps.google.com/?cid=9148378445034294410"
+        },
+        {
+          "id": "ChIJeaUntQDJyJQREjP0wGQ1FTA",
+          "nome": "M&A Studio",
+          "telefone": "(19) 98904-8175",
+          "rede_social": "https://instagram.com/mastudio.cps",
+          "endereco": "Rua: Osvaldo Anhert, N° 374 - Vila Manoel Ferreira, Campinas - SP, 13034-195",
+          "avaliacao": 4.8,
+          "total_avaliacoes": 54,
+          "google_maps": "https://maps.google.com/?cid=3464734195181695762"
+        }
+      ],
+      "esgotada": false
+    },
+    "pet shop|campinas sp": {
+      "areas": [
+        {
+          "low": {
+            "latitude": -23.06121901299138,
+            "longitude": -47.24676706446568
+          },
+          "high": {
+            "latitude": -22.729225023736277,
+            "longitude": -46.81530202716448
+          },
+          "pageToken": "Aa-ngMZdGs_9vw9JfsjU03bfuMQiwsS70IpwM0cgHkpjhETzbsyjTMoq_oSQv3yI-4FhechZ3-Q-RPXXsFePOX3XyRfvaCFD4N-Y_yycLf2XqJYGLJvNKZAA9iv_XwFa0Tbquess1R-QAuaK7xf7wTgqdT2WAN29Vj0aIk6y_MAu_YKAeSPQ1lBguq3J2lzEcH_8mFxobHiGFWZwp7DfAPYBO90JG7UD0tY8EaPdzGglBtdNuuGUHdznxSSllx92ETKiTv0By7ZeuIe-2CWUwj_6mC320bD8jKT7Yjt_RVEwqNh7OhQ4lRH7GeuYX3c1eucgLIA-KV5z1b68zx5F_PMou7AHC0R3GzEeiyO9u-xxQG6x3kqq1Hk8JMs1WLqvdk1FN1nOm_dwAbgSOyiCsznXd50kuJ7qiCF906e5vcge5RoYP7hLyQ59bnNiMDwxsRkF9JJawgS3AFd6xgTeafG_QnQfpet8pvXaNA3akk-gO2uccTmiRwtIw0Ybv1ssSc64_bxZXRPLH0N07Si5GVSaymHjXghHTJHd0SMv6LBPP-gPfXLs9mvIpJzNbjB0uAweNDhPAkI_ppolElw4pBMcMntP7fW7YjwL1kd8iqOMbxyjTreg_-heU7GQ6Pj4ON5fXJrW9X_YZ4WcnRFjRQxNC48-ODLrVBvcSgbG64ALv80_1Gysp_f9-x_nrpucPEayRnuwcLN7LxDEkSVxMg6BRKVvJ_VvW7-mLQ-TNRkgEmSLh7iVB2wVqBKKiOmlhHDs0rayAX4wYj3I6WwmV1-vgwknyunWgU9HKi2WHPC9gopKJPZXbQLHgHpoNWZ2ax3p-qJZ2ksO388",
+          "brutos": 20
+        }
+      ],
+      "fila": [
+        {
+          "id": "ChIJ7Z9LkZ3IyJQRr3u14BvhYRo",
+          "nome": "Little Pet shop clínica veterinária desde 2009",
+          "telefone": "(19) 3388-5041",
+          "rede_social": null,
+          "endereco": "Av. Governador Pedro de Toledo, 1369 - Bonfim, Campinas - SP, 13070-751",
+          "avaliacao": 4.7,
+          "total_avaliacoes": 315,
+          "google_maps": "https://maps.google.com/?cid=1901048027577416623"
+        },
+        {
+          "id": "ChIJOcJljHTPyJQRDZ6kcO9mLaM",
+          "nome": "Pet Shop Natureza",
+          "telefone": "(19) 3368-8707",
+          "rede_social": null,
+          "endereco": "R. Serra das Vertentes, 640 - Jardim Paranapanema, Campinas - SP, 13100-238",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 68,
+          "google_maps": "https://maps.google.com/?cid=11758167380707286541"
+        },
+        {
+          "id": "ChIJDSjGhoS3yJQRz4SsbMElYuU",
+          "nome": "Shopping Do Pet",
+          "telefone": "(19) 98811-3153",
+          "rede_social": null,
+          "endereco": "Av. Arymana, 1596 - Parque Dom Pedro II, Campinas - SP, 13056-440",
+          "avaliacao": 4.8,
+          "total_avaliacoes": 100,
+          "google_maps": "https://maps.google.com/?cid=16528815095085302991"
+        },
+        {
+          "id": "ChIJ5_i0_-3JyJQRyKEHGlOZl3c",
+          "nome": "Cão Capricho Pet Shop - Dra. Fernanda",
+          "telefone": "(19) 3226-2277",
+          "rede_social": null,
+          "endereco": "R. Carolina Henriqueta Marciole Prado, 280 - Dic VI (Conjunto Hab. Santo Dias Silva), Campinas - SP, 13054-618",
+          "avaliacao": 4.7,
+          "total_avaliacoes": 239,
+          "google_maps": "https://maps.google.com/?cid=8617524994194776520"
+        },
+        {
+          "id": "ChIJi6FE8nrIyJQR2NlLZcZHOVI",
+          "nome": "Agro Home Pet",
+          "telefone": "(19) 3269-2907",
+          "rede_social": null,
+          "endereco": "R. Castelnuovo, 891 - Vila Castelo Branco, Campinas - SP, 13061-230",
+          "avaliacao": 4.5,
+          "total_avaliacoes": 213,
+          "google_maps": "https://maps.google.com/?cid=5924845702211164632"
+        },
+        {
+          "id": "ChIJY9yQMIu_yJQREdGOHpLXgRw",
+          "nome": "Roberta’s Agro Pet Shop",
+          "telefone": "(19) 3854-5101",
+          "rede_social": null,
+          "endereco": "R. São Francisco Xavier, 75 - Vila San Martin, Campinas - SP, 13069-035",
+          "avaliacao": 5,
+          "total_avaliacoes": 14,
+          "google_maps": "https://maps.google.com/?cid=2054159927635530001"
+        },
+        {
+          "id": "ChIJ40r4EsrOyJQRS1bDG8U09e8",
+          "nome": "Pet Tio Kadu - Groomer Kadu Diniz",
+          "telefone": "(19) 98200-0140",
+          "rede_social": "http://facebook.com/petprado",
+          "endereco": "R. São José do Rio Pardo, 517 - Jardim Nova Europa, Campinas - SP, 13040-087",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 87,
+          "google_maps": "https://maps.google.com/?cid=17290784365537875531"
+        },
+        {
+          "id": "ChIJPVbscsTPyJQRZAzmClJmYks",
+          "nome": "Pet Shop Washington Luis",
+          "telefone": "(19) 3236-0903",
+          "rede_social": null,
+          "endereco": "Av. Washington Luíz, 688 - Jardim Leonor, Campinas - SP, 13041-005",
+          "avaliacao": 4.8,
+          "total_avaliacoes": 107,
+          "google_maps": "https://maps.google.com/?cid=5432016603118439524"
+        }
+      ],
+      "esgotada": false
+    },
+    "estetica automotiva|campinas sp": {
+      "areas": [
+        {
+          "low": {
+            "latitude": -23.06121901299138,
+            "longitude": -47.24676706446568
+          },
+          "high": {
+            "latitude": -22.729225023736277,
+            "longitude": -46.81530202716448
+          },
+          "pageToken": "Aa-ngMbFGTbRTsdC6zWz1_gJgqPchoOrXF0meYCJQh6V2xZRWd69VyE3In4teqT-mt3ifT6-3sjgVS3qMUgjpoz7N4A33Z7L7upePNbyJs9Rj72Y9_tj4UdU2zgdSykuT-ozuzXo-rhhFBI6yLN_mUhHicbKY4BejL9Nj6KnULm-ozT3N624adki8bmf7oX2sYfeomaH2LIwNPPl4sf8cY6xA7ro8kHdflX-vxlF648y8-l9Syw9uHZUSrVPLzizzSuCeTT9FrI4DPJrI-F7Hrxjt01UCIBcIE1Wj2XCcwBpOJeUU7AeEY-LeqOKK33NOIlo6e9DCOTzQzEnThx7O6QjvcZvp0pwelWdY-A-ogvwq6DRsgKMWqyIqsZMZqF1flHVcwY5SD-oAMrg_IuN-QG6e-5_xURDiHdIr0muROTRbwnECxP5JKxzMIZHg6-_JdMCOkX66DIQSZE4IYnT6l0Gs05O38R3s1CYxCLbpjO89NW0z4cE0_gCl0iultpUfas7OiBNllbWqgw5742MxofH1YQjyDon6YETu4Uhk9SWAcR8Ajq92WmN1xsuI8RjIu_pUcC4UdV0jOP9bYoP5O4Ncdpykgzz3ZTuoX8qeOo8C7tqvDioKu0TtTawyKVEb4OHz7hYtbTQxIPlaE2kyH4zJMAhk17ziX0Yeawn7-vFu1bkTm2WFSnbCLfj4TihApfkGHs3HnyUFLvLsgvfW7xotIaSjnku6ehDOAkE4KGAgX4w1lIGjNwdgB0-jYn1DDuCDfBQaVsMqTYkeo9ie8w1QnLp49gC2yl9DsXDbBq-hP3SJQXD0LgSodMgUb8yHEYCEym7DoOQUig",
+          "brutos": 20
+        }
+      ],
+      "fila": [
+        {
+          "id": "ChIJOWvS6FHPyJQRzHzDp8M13Nk",
+          "nome": "Auto Boss | Estética Automotiva em Campinas",
+          "telefone": "(19) 97121-6698",
+          "rede_social": null,
+          "endereco": "Av. Nossa Sra. de Fátima, 1792 - Vila Esmeralda, Campinas - SP, 13077-001",
+          "avaliacao": 5,
+          "total_avaliacoes": 14,
+          "google_maps": "https://maps.google.com/?cid=15698481515556207820"
+        },
+        {
+          "id": "ChIJ2wxreQDPyJQR4R6gRnLi5Wk",
+          "nome": "Bonna Estética Automotiva",
+          "telefone": "(19) 98966-3033",
+          "rede_social": "https://www.instagram.com/bonna_esteticaautomotiva?igsh=a2VxOHlyZDEzbDdz",
+          "endereco": "R. Aurélio Martins, 245 - Jardim Estoril, Campinas - SP, 13046-275",
+          "avaliacao": 5,
+          "total_avaliacoes": 13,
+          "google_maps": "https://maps.google.com/?cid=7630754124088221409"
+        },
+        {
+          "id": "ChIJKbZSB33HyJQRgSSd3uYI13I",
+          "nome": "Pedro Detailing - estética automotiva em campinas",
+          "telefone": "(19) 99720-4156",
+          "rede_social": "https://www.instagram.com/pedro_detailing/",
+          "endereco": "R. dos Angicos, 296 - Vila Boa Vista, Campinas - SP, 13064-788",
+          "avaliacao": 5,
+          "total_avaliacoes": 31,
+          "google_maps": "https://maps.google.com/?cid=8275092627986916481"
+        },
+        {
+          "id": "ChIJhUX25HnJyJQR7Z0Ib6D2q-A",
+          "nome": "Queiroz higiênizações Automotivo & Residencial",
+          "telefone": "(19) 97412-4141",
+          "rede_social": "https://wa.me/message/AE2ETV57TJ6OF1",
+          "endereco": "Av. Ruy Rodriguez, 326 - Jardim Novo Campos Eliseos, Campinas - SP, 13060-192",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 24,
+          "google_maps": "https://maps.google.com/?cid=16189304454431415789"
+        },
+        {
+          "id": "ChIJORm9uJHOyJQRXsvYh7U8JaM",
+          "nome": "STETICAR detail",
+          "telefone": "(19) 97417-6780",
+          "rede_social": null,
+          "endereco": "R. Antônio Campagnone, 891 - Jardim Bom Sucesso, Campinas - SP, 13045-220",
+          "avaliacao": 4.6,
+          "total_avaliacoes": 57,
+          "google_maps": "https://maps.google.com/?cid=11755869152686426974"
+        },
+        {
+          "id": "ChIJz5RB0lbJyJQR9tC05_pkl3Y",
+          "nome": "PRIME CAR - Estética Automotiva",
+          "telefone": "(19) 99379-7370",
+          "rede_social": null,
+          "endereco": "R. Ribeirão Branco, 503 - Jardim do Trevo, Campinas - SP, 13030-117",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 37,
+          "google_maps": "https://maps.google.com/?cid=8545409846750793974"
+        },
+        {
+          "id": "ChIJ2aa5t9_OyJQRG9cE2C8hf1I",
+          "nome": "GR Estética Automotiva - Martelinho de Ouro | Cristalização | Vitrificação | Higienização | Polimentos",
+          "telefone": "(19) 99750-8069",
+          "rede_social": null,
+          "endereco": "Av. Dr. Antônio Carlos Sáles Júnior, 725 - Jardim Proenca I, Campinas - SP, 13100-410",
+          "avaliacao": 4.5,
+          "total_avaliacoes": 35,
+          "google_maps": "https://maps.google.com/?cid=5944506522523719451"
         }
       ],
       "esgotada": false
