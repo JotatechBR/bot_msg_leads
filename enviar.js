@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import * as tela from './terminal.js'; // importar antes do baileys: filtra os logs internos da libsignal
 import makeWASocket, { useMultiFileAuthState, DisconnectReason } from 'baileys';
@@ -9,6 +10,8 @@ import { leads } from './google.js';
 
 // ---------------- Configuração ----------------
 const CONTAS_PADRAO = 2;             // quantos WhatsApps enviam ao mesmo tempo (mude com --contas N)
+                                     // só a 1ª é obrigatória; as outras, se não tiverem sessão salva, são perguntadas
+const TEMPO_RESPOSTA = 30;           // segundos para responder se quer conectar uma conta opcional (sem resposta = não)
 const MENSAGENS_POR_RODADA = 3;      // cada conta manda 3 seguidas, uma por nicho (rodízio entre os nichos)
 const ENTRE_MENSAGENS = [3, 12];     // segundos: pausa curta entre as mensagens de uma mesma rodada
 const PRIMEIRO_INTERVALO = [30, 40]; // segundos: a primeira espera entre rodadas fica perto de 30s
@@ -128,6 +131,29 @@ async function conectar(conta, tentativa = 1) {
   });
 }
 
+// Sessão já pareada: o creds.json só ganha o campo "me" depois que o QR é escaneado
+function temSessao(pasta) {
+  try {
+    return Boolean(JSON.parse(fs.readFileSync(path.join(pasta, 'creds.json'), 'utf8')).me?.id);
+  } catch {
+    return false;
+  }
+}
+
+// Pergunta sim/não no terminal; sem resposta em TEMPO_RESPOSTA segundos, vale "não"
+async function confirmar(texto) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const resposta = await rl.question(`  ${texto} [s/N] `, { signal: AbortSignal.timeout(TEMPO_RESPOSTA * 1000) });
+    return /^s/i.test(resposta.trim());
+  } catch {
+    console.log();
+    return false;
+  } finally {
+    rl.close();
+  }
+}
+
 async function abrirConta(conta) {
   conta.sock = await conectar(conta);
   conta.caiu = false;
@@ -149,7 +175,7 @@ Uso: node enviar.js "<nicho(s)>" "<cidade(s)>" [--contas N] [--teste]
   node enviar.js "barbearia" "Campinas SP"
   node enviar.js "barbearia, pizzaria, pet shop" "Campinas SP, Valinhos SP"
 
-  --contas N   quantos WhatsApps usar ao mesmo tempo (padrão: ${CONTAS_PADRAO})
+  --contas N   quantos WhatsApps usar ao mesmo tempo (padrão: até ${CONTAS_PADRAO}; só a 1ª é obrigatória)
   --teste      busca na API e mostra as mensagens, sem conectar no WhatsApp nem salvar
 
 Roda sem parar até você apertar Ctrl+C.
@@ -266,9 +292,24 @@ Roda sem parar até você apertar Ctrl+C.
       n, id: `wa${n}`, rotulo: `WhatsApp ${n}`, pasta: path.join(PASTA_SESSOES, `wa${n}`),
       enviadas: 0, semWhatsapp: 0, erros: 0,
     };
-    await abrirConta(conta);
+    // A partir da 2ª conta é opcional: sem sessão salva, pergunta antes de mostrar o QR
+    if (n > 1 && !temSessao(conta.pasta)) {
+      if (!(await confirmar(`Conectar o ${conta.rotulo}? (opcional, vai pedir um QR novo)`))) {
+        tela.info(`${conta.rotulo} pulado.`);
+        continue;
+      }
+    }
+    try {
+      await abrirConta(conta);
+    } catch (e) {
+      if (n === 1) throw e;
+      tela.aviso(`${e.message} Seguindo sem essa conta.`);
+      continue;
+    }
     if (conta.numeroProprio && contas.some((c) => c.numeroProprio === conta.numeroProprio)) {
-      throw new Error(`${conta.rotulo} é o mesmo número de outra conta. Apague "sessoes/${conta.id}" e escaneie com outro celular.`);
+      tela.aviso(`${conta.rotulo} é o mesmo número de outra conta; seguindo sem ela. Para usá-la, apague "sessoes/${conta.id}" e escaneie com outro celular.`);
+      conta.sock.end(undefined);
+      continue;
     }
     tela.contaConectada(conta);
     contas.push(conta);
