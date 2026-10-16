@@ -1,0 +1,13 @@
+# Dependências
+node_modules/
+
+# Segredos: chave da API do Google
+.env
+
+# Login das contas de WhatsApp (quem tiver essa pasta consegue usar as contas)
+sessoes/
+auth_whatsapp/
+
+# Dados gerados: empresas contatadas, telefones e progresso das buscas
+historico.json
+antigos/

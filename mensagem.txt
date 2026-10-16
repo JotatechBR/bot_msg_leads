@@ -1,0 +1,11 @@
+Olá, tudo bem? Vi a {nome} no Google Maps e a nota de vocês é ótima: {avaliacao} estrelas com {total_avaliacoes} avaliações!
+
+Reparei que vocês ainda não têm um site próprio. Trabalho criando sites para negócios como o de vocês, para atrair ainda mais clientes pelo Google.
+
+Posso te mostrar uma ideia sem compromisso?
+---
+Oi! Tudo certo? Encontrei a {nome} no Google e vi que os clientes adoram vocês ({avaliacao} estrelas em {total_avaliacoes} avaliações).
+
+Notei que vocês ainda não têm site. Eu crio sites para empresas como a {nome}, para aparecerem melhor nas buscas e receberem mais contatos.
+
+Posso te mandar uma proposta rápida?
