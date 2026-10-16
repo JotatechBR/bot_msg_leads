@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as tela from './terminal.js'; // importar antes do baileys: filtra os logs internos da libsignal
 import makeWASocket, { useMultiFileAuthState, DisconnectReason } from 'baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
@@ -20,17 +21,9 @@ const ARQUIVO_MENSAGEM = path.join(DIR, 'mensagem.txt');
 const ARQUIVO_HISTORICO = path.join(DIR, 'historico.json');
 
 // ---------------- Utilitários ----------------
-const log = (msg) => console.log(msg);
 const esperar = (seg) => new Promise((r) => setTimeout(r, seg * 1000));
 const sortear = (min, max) => min + Math.random() * (max - min); // número quebrado
 const agora = () => new Date().toLocaleString('pt-BR');
-const hora = () => new Date().toLocaleTimeString('pt-BR');
-
-function formatarTempo(seg) {
-  const min = Math.floor(seg / 60);
-  const resto = (seg - min * 60).toFixed(2).replace('.', ',');
-  return min > 0 ? `${min}min ${resto}s` : `${resto}s`;
-}
 
 function proximoIntervalo(anterior) {
   if (anterior === null) return sortear(...PRIMEIRO_INTERVALO);
@@ -106,7 +99,7 @@ async function conectar(conta, tentativa = 1) {
     sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
       const codigo = lastDisconnect?.error?.output?.statusCode;
       if (qr) {
-        log(`\nEscaneie com o celular do ${conta.rotulo} (WhatsApp > Aparelhos conectados > Conectar um aparelho):\n`);
+        tela.qrCode(conta);
         qrcode.generate(qr, { small: true });
       }
       if (connection === 'open') {
@@ -121,10 +114,10 @@ async function conectar(conta, tentativa = 1) {
       } else if (codigo === DisconnectReason.loggedOut) {
         reject(new Error(`${conta.rotulo}: sessão desconectada pelo celular. Apague a pasta "sessoes/${conta.id}" e rode de novo para escanear o QR.`));
       } else if (codigo === DisconnectReason.restartRequired) {
-        log(`${conta.rotulo}: QR escaneado, finalizando a conexão...`);
+        tela.info(`${conta.rotulo}: QR escaneado, finalizando a conexão...`);
         conectar(conta, tentativa).then(resolve, reject); // reinício obrigatório logo após escanear o QR
       } else if (tentativa < MAX_TENTATIVAS_CONEXAO) {
-        log(`${conta.rotulo}: conexão caiu (código ${codigo ?? '?'}). Tentando de novo (${tentativa + 1}/${MAX_TENTATIVAS_CONEXAO})...`);
+        tela.aviso(`${conta.rotulo}: conexão caiu (código ${codigo ?? '?'}). Tentando de novo (${tentativa + 1}/${MAX_TENTATIVAS_CONEXAO})...`);
         setTimeout(() => conectar(conta, tentativa + 1).then(resolve, reject), 3000);
       } else {
         reject(new Error(`${conta.rotulo}: não foi possível conectar após ${MAX_TENTATIVAS_CONEXAO} tentativas (último código: ${codigo ?? '?'}).`));
@@ -148,12 +141,17 @@ async function main() {
   const posicionais = args.filter((a, i) => !a.startsWith('--') && (iContas < 0 || i !== iContas + 1));
 
   if (posicionais.length < 2 || !(qtdContas >= 1)) {
-    log('Uso: node enviar.js "<nicho(s)>" "<cidade(s)>" [--contas N] [--teste]');
-    log('Ex.: node enviar.js "barbearia" "Campinas SP"');
-    log('     node enviar.js "barbearia, pizzaria, pet shop" "Campinas SP, Valinhos SP"');
-    log('     --contas N  quantos WhatsApps usar ao mesmo tempo (padrão: 2)');
-    log('     --teste     busca na API e mostra as mensagens, sem conectar no WhatsApp nem salvar');
-    log('Roda sem parar até você apertar Ctrl+C.');
+    console.log(`
+Uso: node enviar.js "<nicho(s)>" "<cidade(s)>" [--contas N] [--teste]
+
+  node enviar.js "barbearia" "Campinas SP"
+  node enviar.js "barbearia, pizzaria, pet shop" "Campinas SP, Valinhos SP"
+
+  --contas N   quantos WhatsApps usar ao mesmo tempo (padrão: ${CONTAS_PADRAO})
+  --teste      busca na API e mostra as mensagens, sem conectar no WhatsApp nem salvar
+
+Roda sem parar até você apertar Ctrl+C.
+`);
     process.exit(1);
   }
   const termos = listaDeArgumento(posicionais[0]);
@@ -165,11 +163,21 @@ async function main() {
   const salvar = () => {
     if (!modoTeste) fs.writeFileSync(ARQUIVO_HISTORICO, JSON.stringify(historico, null, 2));
   };
+  const inicio = Date.now();
+  let consultasApi = 0;
+
+  tela.cabecalho({ termos, cidades, contas: qtdContas, teste: modoTeste });
 
   // Bloqueia por empresa (id do Google) e por número (mesmo telefone em outra ficha/filial)
   const numerosUsados = new Set(Object.values(historico.empresas).map((e) => e.numero));
   const jaUsado = (lead) =>
     Boolean(historico.empresas[lead.id]) || numerosUsados.has(normalizarTelefone(lead.telefone));
+
+  const aoEvento = (tipo, dado) => {
+    if (tipo === 'consulta') consultasApi++;
+    if (tipo === 'area') tela.info(`área de busca: ${dado}`);
+    if (tipo === 'dividiu') tela.info(`região com muitos resultados, dividida em partes menores (${dado} áreas na fila)`);
+  };
 
   // Fonte única de leads, compartilhada pelas contas: percorre cada cidade x nicho
   async function* todosOsLeads() {
@@ -178,13 +186,13 @@ async function main() {
         const chaveBusca = `${termo}|${cidade}`.toLowerCase().replace(/\s+/g, ' ');
         const busca = modoTeste ? structuredClone(historico.buscas[chaveBusca] ?? {}) : (historico.buscas[chaveBusca] ??= {});
         if (busca.esgotada) {
-          log(`(já percorrida por completo: "${termo}" em ${cidade})`);
+          tela.info(`"${termo}" em ${cidade} já foi percorrida por completo, pulando`);
           continue;
         }
-        log(`\n>>> Buscando "${termo}" em ${cidade}`);
-        yield* leads({ chave, termo, cidade, busca, jaUsado, log });
+        tela.secao(`Buscando "${termo}" em ${cidade}`);
+        yield* leads({ chave, termo, cidade, busca, jaUsado, aoEvento });
         salvar();
-        log(`>>> Terminou "${termo}" em ${cidade}`);
+        tela.secao(`Terminou "${termo}" em ${cidade}`);
       }
     }
   }
@@ -203,64 +211,66 @@ async function main() {
   }
 
   if (modoTeste) {
-    log('[MODO TESTE] nada será enviado nem salvo.');
     for (let i = 0; i < 10; i++) {
       const lead = await proximoLead();
       if (!lead) break;
       const numero = normalizarTelefone(lead.telefone);
       if (!numero) continue;
       numerosUsados.add(numero);
-      log(`\n=== ${lead.nome} (+${numero}) ===\n${montarMensagem(modelos, lead)}`);
+      tela.previa(lead, numero, montarMensagem(modelos, lead));
     }
+    console.log();
+    tela.info(`${consultasApi} consulta(s) à API do Google`);
     process.exit(0);
   }
 
   // Conecta as contas uma de cada vez (para não misturar os QR codes)
+  tela.secao('Conectando WhatsApp');
   const contas = [];
   for (let n = 1; n <= qtdContas; n++) {
-    const conta = { id: `wa${n}`, rotulo: `WhatsApp ${n}`, tag: `[WA${n}]`, pasta: path.join(PASTA_SESSOES, `wa${n}`), enviadas: 0 };
-    log(`Conectando ${conta.rotulo}...`);
+    const conta = {
+      n, id: `wa${n}`, rotulo: `WhatsApp ${n}`, pasta: path.join(PASTA_SESSOES, `wa${n}`),
+      enviadas: 0, semWhatsapp: 0, erros: 0,
+    };
     await abrirConta(conta);
     if (conta.numeroProprio && contas.some((c) => c.numeroProprio === conta.numeroProprio)) {
       throw new Error(`${conta.rotulo} é o mesmo número de outra conta. Apague "sessoes/${conta.id}" e escaneie com outro celular.`);
     }
-    log(`${conta.rotulo} conectado (+${conta.numeroProprio ?? '?'})`);
+    tela.contaConectada(conta);
     contas.push(conta);
   }
 
   let encerrando = false;
-  const resumo = () => {
-    const total = contas.reduce((s, c) => s + c.enviadas, 0);
-    log(`\nTotal enviado nesta execução: ${total} (${contas.map((c) => `${c.tag} ${c.enviadas}`).join(', ')})`);
-  };
   const encerrar = (codigo) => {
     encerrando = true;
     salvar();
-    resumo();
+    tela.resumo({ contas, inicio, consultasApi });
     for (const c of contas) c.sock?.end(undefined);
     process.exit(codigo);
   };
   process.on('SIGINT', () => {
-    log('\nEncerrando (Ctrl+C)...');
+    console.log();
+    tela.info('Encerrando (Ctrl+C)...');
     encerrar(0);
   });
 
-  log(`\nEnviando com ${contas.length} conta(s) ao mesmo tempo. Aperte Ctrl+C para parar.\n`);
+  console.log();
+  tela.info(`Enviando com ${contas.length} conta(s) ao mesmo tempo. Aperte Ctrl+C para parar.`);
 
   async function trabalhador(conta) {
     let anterior = null;
     while (!encerrando) {
       if (conta.caiu) {
         if (conta.deslogada) {
-          log(`${conta.tag} sessão desconectada pelo celular; essa conta parou. Apague "sessoes/${conta.id}" e rode de novo para reconectar.`);
+          tela.contaAviso(conta, `sessão desconectada pelo celular; essa conta parou. Apague "sessoes/${conta.id}" e rode de novo.`);
           return;
         }
-        log(`${conta.tag} conexão caiu, reconectando...`);
+        tela.contaAviso(conta, 'conexão caiu, reconectando...');
         try {
           await abrirConta(conta);
-          log(`${conta.tag} reconectado`);
+          tela.contaAviso(conta, 'reconectado');
         } catch (err) {
-          log(`${conta.tag} ${err.message} Tentando de novo em 1 minuto.`);
+          tela.contaAviso(conta, `${err.message} Tentando de novo em 1 minuto.`);
           await esperar(60);
           continue;
         }
@@ -283,7 +293,8 @@ async function main() {
         if (!contato?.exists) {
           registro.status = 'sem_whatsapp';
           salvar();
-          log(`${conta.tag} ✗ ${lead.nome} (+${numero}): sem WhatsApp, pulando`);
+          conta.semWhatsapp++;
+          tela.envio(conta, 'sem_whatsapp', lead, numero);
           continue;
         }
         jid = contato.jid;
@@ -293,7 +304,7 @@ async function main() {
         numerosUsados.delete(numero);
         devolvidos.push(lead);
         salvar();
-        log(`${conta.tag} falha ao verificar +${numero} (${err.message}); empresa volta para a fila`);
+        tela.envio(conta, 'devolvido', lead, numero, err.message);
         await esperar(15);
         continue;
       }
@@ -310,14 +321,15 @@ async function main() {
       } catch (err) {
         registro.status = 'erro'; // pode ou não ter saído: não tenta de novo para não repetir
         salvar();
-        log(`${conta.tag} ✗ ${lead.nome} (+${numero}): erro ao enviar - ${err.message}`);
+        conta.erros++;
+        tela.envio(conta, 'erro', lead, numero, err.message);
         await esperar(15);
         continue;
       }
 
       const intervalo = proximoIntervalo(anterior);
       anterior = intervalo;
-      log(`${hora()} ${conta.tag} ✓ ${lead.nome} (+${numero}) | próxima em ${formatarTempo(intervalo)}`);
+      tela.envio(conta, 'enviado', lead, numero, `próxima em ${tela.formatarTempo(intervalo)}`);
       await esperar(intervalo);
     }
   }
@@ -325,14 +337,14 @@ async function main() {
   try {
     await Promise.all(contas.map((c) => trabalhador(c)));
   } catch (err) {
-    log(`\nErro: ${err.message}`); // ex.: erro permanente da API do Google (cota, faturamento)
+    tela.erro(err.message); // ex.: erro permanente da API do Google (cota, faturamento)
     encerrar(1);
   }
-  log('\nAcabaram os leads de todas as buscas. Rode de novo com outros nichos ou cidades.');
+  tela.secao('Acabaram os leads de todas as buscas. Rode de novo com outros nichos ou cidades.');
   encerrar(0);
 }
 
 main().catch((err) => {
-  log(`Erro: ${err.message}`);
+  tela.erro(err.message);
   process.exit(1);
 });

@@ -1,0 +1,403 @@
+{
+  "empresas": {
+    "migrado-5519995682603": {
+      "nome": "The Barber’s Barbearia",
+      "numero": "5519995682603",
+      "status": "enviado",
+      "data": "16/10/2026, 18:08:16"
+    },
+    "migrado-5519996965740": {
+      "nome": "Barbearia VK",
+      "numero": "5519996965740",
+      "status": "enviado",
+      "data": "16/10/2026, 18:09:11"
+    },
+    "migrado-5519991563904": {
+      "nome": "Kaká Cortes - Barbearia",
+      "numero": "5519991563904",
+      "status": "enviado",
+      "data": "16/10/2026, 18:10:25"
+    },
+    "migrado-5519993206447": {
+      "nome": "Scobar Barbearia",
+      "numero": "5519993206447",
+      "status": "enviado",
+      "data": "16/10/2026, 18:11:41"
+    },
+    "ChIJqdXMEOrJyJQRnecNRDG7KjU": {
+      "nome": "Black BOX barbearia",
+      "numero": "551922238587",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:30:19"
+    },
+    "ChIJfwQacIDIyJQRz_UXM-_aevk": {
+      "nome": "DuElias Barbearia",
+      "numero": "5519982667376",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:30:18"
+    },
+    "ChIJX7IKGdjPyJQR1LsHib7uGs0": {
+      "nome": "Barbearia Mr. Charles",
+      "numero": "5519991286744",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:30:59"
+    },
+    "ChIJ_Rv72fPFyJQR69V7IjxUKpE": {
+      "nome": "Barbearia Ricci Taquaral",
+      "numero": "551932264004",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:31:04"
+    },
+    "ChIJT6_sWMDOyJQRHkfsWhPc2zM": {
+      "nome": "Reis da Navalha Barbearia",
+      "numero": "5519994764408",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:34:24"
+    },
+    "ChIJmwMvHZnHyJQR9QE3pnOB3sA": {
+      "nome": "Barbearia Barba Real",
+      "numero": "551932439173",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:34:43"
+    },
+    "ChIJo-iPG4rJyJQRMXBnC6gIFJg": {
+      "nome": "Marcos Barbearia",
+      "numero": "5519982407851",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:34:49"
+    },
+    "ChIJu2cas9DOyJQR8ivuNJpAv_o": {
+      "nome": "Barbearia OLLI",
+      "numero": "5519986076272",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:35:04"
+    },
+    "ChIJ_4_qZ_TIyJQR87tQ6g-jJSA": {
+      "nome": "Barbearia do Barboza",
+      "numero": "5519998959997",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:37:40"
+    },
+    "ChIJ_8Iv_97JyJQRCBnlETPjrUo": {
+      "nome": "Mr.Braga Barbearia",
+      "numero": "5519988642718",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:39:51"
+    },
+    "ChIJ5frpKDzPyJQRWtsU1VSHu84": {
+      "nome": "Rony Barbearia",
+      "numero": "5519988993077",
+      "status": "sem_whatsapp",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:41:42"
+    },
+    "ChIJdWJv2OXPyJQRsT86XRl_pM0": {
+      "nome": "Externa Barbearia",
+      "numero": "5519998209548",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:41:49"
+    },
+    "ChIJg2RDsHzGyJQR5Yqp1Pd3o6M": {
+      "nome": "Barbearia cadinhostyllus",
+      "numero": "5519993331727",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:41:49"
+    },
+    "ChIJG4klPALLyJQRWGfQuWGl2mw": {
+      "nome": "Studio vip barbearia",
+      "numero": "5519993228040",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:43:01"
+    },
+    "ChIJV9LIfrrPyJQRmrLK9owPPl4": {
+      "nome": "Pimpo's Barbearia",
+      "numero": "5519993396372",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:45:23"
+    },
+    "ChIJC5y58tXFyJQRRoRCr53goTU": {
+      "nome": "ANTONY BARBER SHOP Galleria Shopping | Barbearia",
+      "numero": "551935003604",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:45:27"
+    },
+    "ChIJ5eWYqmTByJQRIkpNEVXAIVs": {
+      "nome": "Wall Street Barbearia",
+      "numero": "5519982051621",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:45:35"
+    },
+    "ChIJVSOaTtTPyJQRX_b6Y2RM0SU": {
+      "nome": "Penny Lane Barbearia em Campinas - Pq Prado",
+      "numero": "551932714099",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:46:19"
+    },
+    "ChIJMxNFAsTFyJQR94TDjjXsbPs": {
+      "nome": "Barbearia WalBarber",
+      "numero": "5519998937850",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:46:25"
+    },
+    "ChIJu_uV4mLGyJQRcrpDyojvNvg": {
+      "nome": "Cardoso Barbearia",
+      "numero": "5519995524377",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:48:17"
+    },
+    "ChIJ8fuVMsrGyJQRWJ9V0ow_vuw": {
+      "nome": "Hombrazo Barbearia - Barão Geraldo",
+      "numero": "551933677414",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:48:19"
+    },
+    "ChIJJ-aANP63yJQRDZiUvJEA1EY": {
+      "nome": "Ricardinho Barbearia",
+      "numero": "5519992896480",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:48:27"
+    },
+    "ChIJJRUODoTGyJQR87G_ar0GMNo": {
+      "nome": "Barbearia Dom Camargo",
+      "numero": "551937569510",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:49:38"
+    },
+    "ChIJJxVkD_TJyJQRHGmt_x9fj5I": {
+      "nome": "CAPITA BARBEARIA",
+      "numero": "5519995177553",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:51:39"
+    },
+    "ChIJ0etQf9PFyJQRGRkGNYRSDIo": {
+      "nome": "Barber and Coffee",
+      "numero": "5519995149786",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:52:33"
+    },
+    "ChIJVSPfhrzPyJQRKHzM_uTN67Q": {
+      "nome": "Barbearia Freedom",
+      "numero": "5519995999159",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:54:48"
+    },
+    "ChIJ_ZYY4k_JyJQR3UTKlR9DgMY": {
+      "nome": "Mafia Barbearia & Sports Bar Jd. Nova Europa",
+      "numero": "5519991490201",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:55:30"
+    },
+    "ChIJDfv0OMjFyJQR2FjPjPNODYM": {
+      "nome": "Barbearia Neves",
+      "numero": "5519994196803",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:56:49"
+    },
+    "ChIJAaiWTF7JyJQRlK2CMTIp5xE": {
+      "nome": "Barbearia Wendell Barber Shop",
+      "numero": "5519991417575",
+      "status": "sem_whatsapp",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:56:41"
+    },
+    "ChIJiYwrvw7PyJQRvkN4Rk9mVW4": {
+      "nome": "Barbearia do Almeida II",
+      "numero": "5519992442460",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:56:48"
+    },
+    "ChIJJ2lgFv3IyJQRzTkbD4_VRJE": {
+      "nome": "Barbearia Elsombrero",
+      "numero": "5519982207126",
+      "status": "enviado",
+      "conta": "wa1",
+      "data": "16/10/2026, 18:57:24"
+    },
+    "ChIJ0wboKvm1yJQRH0sTRhy02oc": {
+      "nome": "Barbearia Ge",
+      "numero": "5519993398448",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:57:34"
+    },
+    "ChIJ9zWGnGTLyJQRq8rhKto_tHg": {
+      "nome": "RICK’S BARBEARIA Nova Europa",
+      "numero": "5519974288500",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 18:59:38"
+    },
+    "ChIJba61gcPJyJQRqrpUxP46w-o": {
+      "nome": "Gil Barbearia",
+      "numero": "5519993840931",
+      "status": "enviado",
+      "conta": "wa2",
+      "data": "16/10/2026, 19:00:20"
+    }
+  },
+  "buscas": {
+    "barbearia|campinas sp": {
+      "areas": [
+        {
+          "low": {
+            "latitude": -23.06121901299138,
+            "longitude": -47.24676706446568
+          },
+          "high": {
+            "latitude": -22.895222018363828,
+            "longitude": -47.031034545815075
+          },
+          "pageToken": "Aa-ngMbI3jeYqiwDxxXf36D_jSgrSziDyUSlizcpI6lpw9GmFoUuSCwwYNyZnIU63fx67VY-3BsdD2s167vyKjV08A2SA0fWzVHsRTy6sC-RxKi3GHhwQMuJ2SsQxBAC9tdi4cJYuWyrD8UV2RZJoihv7HLQcHhVm7CQgXCav9xmhEq_NXgzYxzKuZVtSJdmrBOSqTX-XgvUypMuFs_FYKJMQnDvmWlpSa_uxHa33xY7WNQhTn4Gu74oql7ydFb8CnHb9Iwa-5Kwg-giAe_iH23ZR6emJudQhseYsuDufYHT5Yx2x_yF-O_FPrBHOrlpUNKWmEhcSkzs2Y7aLYFoopyV5MxxBOYNgPnYPMBhKiZt2-sYJiMOBR5dI-nbj8mTbFLg_1nTWqJ6IBqxWQ_KMXFYm0_2wqO70w3uY4wOC9GzZZJHtaIOS-1Y6nQpyp0C8m8xyc6T9H_9OYCXyWqM5iJ3WBNX9OyO1b_0QcOrbh1hYOUADIaahYPkHA5DxdaKS-_3Fmdt363aE3H8QLpI5ZH8R5lyAaT-9XMReMdABBUOFzm6fKGTxwnFmg91E-Pj-DjolGGt9KODVSqF3HVWoXpktdb4qmSnt0_344q0HpM83SjuN_q-EpIPHGQuIDkrvz61GkJ3SJ9s9Dv7qiQQN4IntEcQpzJQ1jjHIakd1Et8puhWl2bxRedZJSRaSGXVJomDQZmuDVOaN1PfgxdEIxgX2U05rdHMBFFN0qXOkTc2NDLmtBSkGYm4WNfaz-o5zSHeXYDbPTQ0zjOH-rx9VqBCwqNYnXtJ4fTpU3lcr6Ch1_LucjUL36wEYVB97obPJXgU_0vWXeL93zi-rK4ot36nkMBWpqh79jhq-sOXomCxFu92kZi7dEDh4Ds1jjSlnodtHifEwCTch7zn93_KD3R_NYb-PUlX3DW-ofjX6OKxSArlXpISzXZOGMQal-FvV8qhOvITkrl71bAC0Pnt_i_SDw6TLyqEq5mBKEui7wy3xH1viB1XLXKCCuum5sT9Loj722-3TQkzYbW26aZCuvJFt8IK_URcXvi0nWoMqEwLQplAe0wv1N0m40qgTLGr-OautPsKmo3OU-fQ6c-Rfl7oYbeKo_zKqrcVGI1M1Z9ICr4B2RSPMIRYHjXHwvNKXhlnEsgiq3uSArP4ET3S-fmFTjPgOaB8sGTWfKpQ9k-uuOFnAt4HM0sy61t8TX0Km8QrMVPK3U4W3U8YG7hwzaCPWQSZ-pKYB0Ono5edYz4AKSjHXnhuSVVI8_dsk7drdUbmbD3NFm1AKnvp0KgVY7JSX6n2H_fU69Vym2LZpck1lKsrbo1gCKCYeAgFvSVyBxlNt_LU2IGRZKORBrhS_pmxg7mliqWwK8kmbgFEz6bQEWH9lZuxGHGRIM_8byqmOecb_CYDjGX2cdCG93wblIldKNffYoyzgsC2WnsYbG5Lv9U3ibLqm7PgDZZ0zHr_2PvO7_vrzQEMt346CXeZoPZX43owcY897CEMa80bB5kfd0xbaQipN1DKxmPLJ-_40dppo-6aehiAQgOGZU80VDCQudXRK54HKDj6fACcHioUnxrr7bEYDWmJUwGJ0KT6lfzUZG0qhfsPiNoCceUy",
+          "brutos": 40
+        },
+        {
+          "low": {
+            "latitude": -23.06121901299138,
+            "longitude": -47.031034545815075
+          },
+          "high": {
+            "latitude": -22.895222018363828,
+            "longitude": -46.81530202716448
+          },
+          "pageToken": null,
+          "brutos": 0
+        },
+        {
+          "low": {
+            "latitude": -22.895222018363828,
+            "longitude": -47.24676706446568
+          },
+          "high": {
+            "latitude": -22.729225023736277,
+            "longitude": -47.031034545815075
+          },
+          "pageToken": null,
+          "brutos": 0
+        },
+        {
+          "low": {
+            "latitude": -22.895222018363828,
+            "longitude": -47.031034545815075
+          },
+          "high": {
+            "latitude": -22.729225023736277,
+            "longitude": -46.81530202716448
+          },
+          "pageToken": null,
+          "brutos": 0
+        }
+      ],
+      "fila": [
+        {
+          "id": "ChIJc4HBgPfIyJQRep4BTvjgwbg",
+          "nome": "RONES BARBER SHOP",
+          "telefone": "(19) 98174-3705",
+          "rede_social": "https://www.instagram.com/rones_salao_e_barbearia?igsh=MTV4bzA4ZzQ4YnRiaQ==",
+          "endereco": "SHOPPING PARQUE DAS BANDEIRAS - Av. John Boyd Dunlop, 3900 - Lj 2080 - Jardim Ipaussurama, Campinas - SP, 13060-803",
+          "avaliacao": 4.8,
+          "total_avaliacoes": 146,
+          "google_maps": "https://maps.google.com/?cid=13313169330549137018"
+        },
+        {
+          "id": "ChIJbRvKRH63yJQRyOD3wa4s0uY",
+          "nome": "Barbearia Paraiso",
+          "telefone": "(11) 97323-0144",
+          "rede_social": null,
+          "endereco": "Av. Arymana, 769 - Parque Dom Pedro II, Campinas - SP, 13054-440",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 46,
+          "google_maps": "https://maps.google.com/?cid=16632405502922842312"
+        },
+        {
+          "id": "ChIJdWJv2OXPyJQRsT86XRl_pM0",
+          "nome": "Externa Barbearia",
+          "telefone": "(19) 99820-9548",
+          "rede_social": null,
+          "endereco": "R. Waldemar César da Silveira, 293 - Jardim Cura D'ars, Campinas - SP, 13045-541",
+          "avaliacao": 5,
+          "total_avaliacoes": 90,
+          "google_maps": "https://maps.google.com/?cid=14818108420870782897"
+        },
+        {
+          "id": "ChIJG4klPALLyJQRWGfQuWGl2mw",
+          "nome": "Studio vip barbearia",
+          "telefone": "(19) 99322-8040",
+          "rede_social": null,
+          "endereco": "Rua Ruth Botelho Góes, 163 - Res. Nova Bandeirante, Campinas - SP, 13052-601",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 27,
+          "google_maps": "https://maps.google.com/?cid=7843763540166993752"
+        },
+        {
+          "id": "ChIJe_l5jSnPyJQRFllaotieyaA",
+          "nome": "Play Barbershop",
+          "telefone": "(19) 99694-7058",
+          "rede_social": "https://linktr.ee/Playbarbershop",
+          "endereco": "R. José Pedrocelli, 8 - Parque Jambeiro, Campinas - SP, 13042-510",
+          "avaliacao": 5,
+          "total_avaliacoes": 32,
+          "google_maps": "https://maps.google.com/?cid=11585966169661266198"
+        },
+        {
+          "id": "ChIJo-iPG4rJyJQRMXBnC6gIFJg",
+          "nome": "Marcos Barbearia",
+          "telefone": "(19) 98240-7851",
+          "rede_social": null,
+          "endereco": "Av. Eng. Márcio Duarte Ribeiro, 42 - Jardim Monte Cristo, Campinas - SP, 13051-027",
+          "avaliacao": 4.9,
+          "total_avaliacoes": 34,
+          "google_maps": "https://maps.google.com/?cid=10958393311138115633"
+        },
+        {
+          "id": "ChIJVSOaTtTPyJQRX_b6Y2RM0SU",
+          "nome": "Penny Lane Barbearia em Campinas - Pq Prado",
+          "telefone": "(19) 3271-4099",
+          "rede_social": null,
+          "endereco": "Av. Washington Luíz, 2047 - Vila Marieta, Campinas - SP, 13042-105",
+          "avaliacao": 4.7,
+          "total_avaliacoes": 61,
+          "google_maps": "https://maps.google.com/?cid=2725043243593692767"
+        },
+        {
+          "id": "ChIJU9MP0mq3yJQRrbQIiXanHlk",
+          "nome": "Barbearia resenha",
+          "telefone": "(19) 98990-5163",
+          "rede_social": null,
+          "endereco": "Av. Adolpho Bloch, 586 - Parque Floresta, Campinas - SP, 13058-120",
+          "avaliacao": 4.7,
+          "total_avaliacoes": 20,
+          "google_maps": "https://maps.google.com/?cid=6421754246223934637"
+        }
+      ],
+      "esgotada": false
+    }
+  }
+}

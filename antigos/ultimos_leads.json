@@ -1,0 +1,7 @@
+[
+  {"nome": "The Barber’s Barbearia", "telefone": "(19) 99568-2603", "rede_social": "https://www.instagram.com/thebarberscps/", "endereco": "Av. das Amoreiras, 1311 - São Bernardo, Campinas - SP, 13030-405", "avaliacao": 4.9, "total_avaliacoes": 262, "google_maps": "https://maps.google.com/?cid=2375173559145906904"},
+  {"nome": "Barbearia Barba Real", "telefone": "(19) 3243-9173", "rede_social": null, "endereco": "R. Dom Pedro I, n° 415 - Jardim Brasil, Campinas - SP, 13073-003", "avaliacao": 4.9, "total_avaliacoes": 245, "google_maps": "https://maps.google.com/?cid=13897687833821774325"},
+  {"nome": "Barbearia VK", "telefone": "(19) 99696-5740", "rede_social": "https://www.instagram.com/barbeariavkcastelo/", "endereco": "Av. Dr. Alberto Sarmento, 667 - Jardim Chapadão, Campinas - SP, 13070-711", "avaliacao": 4.9, "total_avaliacoes": 362, "google_maps": "https://maps.google.com/?cid=1230653737913136471"},
+  {"nome": "Kaká Cortes - Barbearia", "telefone": "(19) 99156-3904", "rede_social": null, "endereco": "R. Bernardino de Campos, 476 - Centro, Campinas - SP, 13010-150", "avaliacao": 5, "total_avaliacoes": 234, "google_maps": "https://maps.google.com/?cid=7965887373188431744"},
+  {"nome": "Scobar Barbearia", "telefone": "(19) 99320-6447", "rede_social": "https://www.instagram.com/scobar.store_barbearia/", "endereco": "Av. Dr. Thomaz Alves, 122 - B - Centro, Campinas - SP, 13010-160", "avaliacao": 4.9, "total_avaliacoes": 296, "google_maps": "https://maps.google.com/?cid=18160724685151373621"}
+]

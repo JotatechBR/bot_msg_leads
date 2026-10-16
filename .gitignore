@@ -8,6 +8,4 @@ node_modules/
 sessoes/
 auth_whatsapp/
 
-# Dados gerados: empresas contatadas, telefones e progresso das buscas
-historico.json
-antigos/
+

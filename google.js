@@ -133,11 +133,13 @@ function podeDividir({ low, high }) {
  * `busca` é o estado salvo dessa pesquisa e é atualizado aqui:
  *   { areas: [{ low, high, pageToken, brutos }], fila: [lead], esgotada }
  * `jaUsado(lead)` diz se a empresa já foi contatada (essas são descartadas).
+ * `aoEvento(tipo, dado)` recebe: 'consulta' (chamada à API), 'area' (nome da cidade), 'dividiu' (áreas pendentes).
  */
-export async function* leads({ chave, termo, cidade, busca, jaUsado, log }) {
+export async function* leads({ chave, termo, cidade, busca, jaUsado, aoEvento }) {
   if (!busca.areas) {
+    aoEvento?.('consulta');
     const area = await areaDaCidade(chave, cidade);
-    log?.(`Área de busca: ${area.nome}`);
+    aoEvento?.('area', area.nome);
     busca.areas = [{ low: area.low, high: area.high, pageToken: null, brutos: 0 }];
     busca.fila = [];
     busca.esgotada = false;
@@ -166,6 +168,7 @@ export async function* leads({ chave, termo, cidade, busca, jaUsado, log }) {
 
     let dados;
     try {
+      aoEvento?.('consulta');
       dados = await chamarApi(chave, FIELD_MASK_LEADS, body);
     } catch (err) {
       if (area.pageToken && err.status === 'INVALID_ARGUMENT') {
@@ -189,6 +192,7 @@ export async function* leads({ chave, termo, cidade, busca, jaUsado, log }) {
       if (area.brutos >= LIMITE_POR_BUSCA && podeDividir(area)) {
         // saturou: provavelmente há mais estabelecimentos nessa área do que a API mostrou
         busca.areas.push(...dividirEm4(area).map((r) => ({ ...r, pageToken: null, brutos: 0 })));
+        aoEvento?.('dividiu', busca.areas.length);
       }
     }
   }
