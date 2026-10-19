@@ -58,7 +58,7 @@ export default async function handler(request, response) {
       options.body = await requestBody(request);
     }
     const result = await fetch(new URL(`/api/${route}`, backend), options);
-    if (!result.headers.get('content-type')?.includes('application/json')) return json(502, { error: 'O servidor do bot não respondeu com dados da API. Verifique se o Ubuntu/VPS e o túnel estão ligados e se ORBITA_BACKEND_URL ainda é o endereço atual.' });
+    if (!result.headers.get('content-type')?.includes('application/json')) return json(502, { error: 'O servidor do bot não respondeu com dados da API. Verifique se o servidor está em execução e se ORBITA_BACKEND_URL aponta para a origem HTTPS correta.' });
     const data = await result.json();
     if (route === 'data' && result.ok) data.liveTransport = 'poll';
     return json(result.status, data);

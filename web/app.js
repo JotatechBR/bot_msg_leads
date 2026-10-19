@@ -167,7 +167,7 @@ function startPolling() {
 
 function startLiveEvents() {
   if (liveEvents || livePolling) return;
-  // Quick Tunnels do not support SSE. Keep QR, counters and logs updated by polling.
+  // Use polling when the frontend API proxy does not stream events.
   if (state.data.liveTransport === 'poll') { startPolling(); return; }
   liveEvents = new EventSource('/api/events');
   liveEvents.onmessage = (event) => {

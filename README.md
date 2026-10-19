@@ -16,42 +16,32 @@ Acesse **http://localhost:3001** no navegador. Para desenvolvimento, `npm run de
 
 O arquivo `vercel.json` publica a pasta `web/`, que contém `index.html`, e encaminha `/api/*` para `api/proxy.js`. A Vercel hospeda o painel; o motor das campanhas e as sessões do WhatsApp continuam em um servidor Node persistente no Ubuntu ou em uma VPS.
 
-1. Mantenha o servidor do bot acessível por HTTPS. No Ubuntu, use `npm run publico` e copie o **LINK PÚBLICO** mostrado no terminal.
+1. Execute o bot em um servidor Ubuntu/VPS com Node.js e armazenamento persistente, usando `npm start`. Configure seu domínio HTTPS em um proxy reverso que encaminhe as requisições para `http://127.0.0.1:3001`.
 2. Na Vercel, use a raiz deste repositório como **Root Directory** e **Other** como **Framework Preset**. O `vercel.json` define a pasta de saída como `web`, sem instalação nem comando de build.
-3. Em **Settings → Environment Variables**, configure `ORBITA_BACKEND_URL` com a origem HTTPS do bot, por exemplo `https://nome-do-tunel.trycloudflare.com`, sem `/api` no final.
+3. Em **Settings → Environment Variables**, configure `ORBITA_BACKEND_URL` com a origem HTTPS do bot, por exemplo `https://api.seudominio.com`, sem `/api` no final.
 4. Publique novamente. O painel usa o mesmo domínio da Vercel para suas chamadas e o proxy as encaminha ao servidor do bot.
 
-Sem `ORBITA_BACKEND_URL`, o painel informa a configuração pendente. A chave do Google e as sessões permanecem no servidor do bot. Se usar um túnel temporário, atualize essa variável e publique novamente quando o link mudar.
+Sem `ORBITA_BACKEND_URL`, o painel informa a configuração pendente. A chave do Google e as sessões permanecem no servidor do bot. O endereço precisa apontar para uma API HTTPS em execução; não use a chave do Google nem o domínio do próprio painel da Vercel como valor.
 
-## Acessar de qualquer rede, sem usuário e senha
+## Usar um servidor próprio com HTTPS
 
-Encerre a execução anterior com **Ctrl+C** e rode no terminal do projeto:
-
-```bash
-npm run publico
-```
-
-Na primeira execução, o comando baixa o `cloudflared` do repositório oficial da Cloudflare, verifica o SHA-256 informado pelo GitHub e salva o executável em `.orbita/bin/`. Nas próximas execuções, reutiliza o arquivo verificado. Não é necessário instalar pacotes com `sudo`.
-
-O comando inicia o servidor e abre um túnel HTTPS. O terminal mostra **LINK PÚBLICO** com um endereço no formato `https://nome-aleatorio.trycloudflare.com`. Compartilhe esse link: qualquer pessoa, de qualquer rede, pode abrir o painel sem fazer login. Acesso às campanhas, contas, mensagens, histórico e logs também fica disponível pelo link.
-
-Mantenha esse terminal e o Ubuntu ligados e conectados à internet. **Ctrl+C** encerra o túnel e o servidor. O endereço é temporário e muda ao iniciar outro túnel; não é necessário abrir a porta do roteador. Esse comportamento é o dos [Quick Tunnels da Cloudflare](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
-
-Status, QR code, contadores e logs são atualizados a cada dois segundos no acesso público, porque Quick Tunnels não suportam SSE. No acesso local, a conexão de eventos em tempo real continua disponível.
-
-Se você já possui o `cloudflared` instalado, pode indicar seu executável:
+O projeto executa diretamente com Node.js:
 
 ```bash
-CLOUDFLARED_BIN=/usr/local/bin/cloudflared npm run publico
+npm start
 ```
 
-Para usar outra porta local:
+Para usar um domínio próprio, configure no `.env` a origem HTTPS do servidor:
 
-```bash
-PORT=3002 npm run publico
+```dotenv
+ORBITA_URL_PUBLICA=https://api.seudominio.com
 ```
 
-O servidor do modo público escuta em `127.0.0.1`, e o túnel faz a ponte com a internet. Executar apenas `node server.js --publico` prepara o servidor para um túnel ou proxy HTTPS; esse comando sozinho não cria um link público.
+Configure um proxy reverso no mesmo servidor para encaminhar as requisições desse domínio para `http://127.0.0.1:3001`, preservando o cabeçalho `Host` e enviando `X-Forwarded-Proto: https`. O HTTPS é atendido pelo proxy; definir a variável, por si só, não publica o servidor nem configura domínio ou certificado.
+
+Se o painel estiver na Vercel, use essa mesma origem como `ORBITA_BACKEND_URL` nas variáveis do projeto da Vercel. O acesso permanece sem usuário e senha, conforme solicitado. O servidor e o armazenamento das sessões precisam permanecer disponíveis para executar campanhas.
+
+Status, QR code e logs usam eventos em tempo real no acesso direto. Pelo proxy da Vercel, são atualizados a cada dois segundos.
 
 ## Acessar somente pela rede local no Ubuntu
 
@@ -72,7 +62,7 @@ sudo ufw allow from 192.168.15.0/24 to any port 3001 proto tcp
 sudo ufw status
 ```
 
-A regra libera a porta somente para essa faixa de rede. Se mudar a porta com `PORT`, ajuste também a regra. Se mudar de rede, use o novo IP e a nova faixa; `hostname -I` mostra os endereços do computador. Essa regra não é necessária para o túnel do comando `npm run publico`.
+A regra libera a porta somente para essa faixa de rede. Se mudar a porta com `PORT`, ajuste também a regra. Se mudar de rede, use o novo IP e a nova faixa; `hostname -I` mostra os endereços do computador.
 
 Você pode definir `ORBITA_REDE=1` no `.env` para habilitar o modo de rede local com `npm start`. As opções antigas `ORBITA_USUARIO`, `ORBITA_SENHA` e o arquivo `.orbita/acesso-rede.json` deixaram de ser usados.
 
@@ -139,7 +129,7 @@ O visual combina verde floresta `#203E35`, marfim `#F5F6F1` e sálvia `#D7E7AD`.
 
 As animações usam entradas breves, feedback de clique e uma abertura com órbitas. Não há carregamento de fontes, imagens ou scripts de terceiros.
 
-No modo padrão, o servidor aceita somente conexões do próprio computador. `npm run rede` permite a rede privada, e `npm run publico` permite visitantes de qualquer rede pelo túnel HTTPS. Os dois modos funcionam sem login. A validação de origem e a lista explícita de arquivos públicos permanecem ativas. Chaves do Google e arquivos de credenciais do WhatsApp não são enviados ao navegador; o QR temporário é exibido somente para o pareamento.
+No modo padrão, o servidor aceita somente conexões do próprio computador. `npm run rede` permite a rede privada. Para acesso externo, use um servidor próprio com domínio HTTPS e configure `ORBITA_URL_PUBLICA`. O acesso funciona sem login. A validação de origem e a lista explícita de arquivos públicos permanecem ativas. Chaves do Google e arquivos de credenciais do WhatsApp não são enviados ao navegador; o QR temporário é exibido somente para o pareamento.
 
 ## Validação
 
