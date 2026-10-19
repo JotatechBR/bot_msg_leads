@@ -7,6 +7,7 @@ import makeWASocket, { useMultiFileAuthState, DisconnectReason } from 'baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { leads } from './google.js';
+import { acquireProjectLock } from './bot/storage.js';
 
 // ---------------- Configuração ----------------
 const CONTAS_PADRAO = 2;             // quantos WhatsApps enviam ao mesmo tempo (mude com --contas N)
@@ -184,6 +185,11 @@ Roda sem parar até você apertar Ctrl+C.
   }
   const termos = listaDeArgumento(posicionais[0]);
   const cidades = listaDeArgumento(posicionais.slice(1).join(','));
+
+  if (!modoTeste) {
+    const release = acquireProjectLock(DIR);
+    process.on('exit', release);
+  }
 
   const chave = carregarChave();
   const modelos = carregarModelos();

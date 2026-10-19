@@ -1,0 +1,18 @@
+{
+  "5f034991-099f-4d1e-ac8e-39fa40762a90": {
+    "id": "ce4a99ae-0fb3-40b4-93a5-33fb42563efb",
+    "campaignId": "5f034991-099f-4d1e-ac8e-39fa40762a90",
+    "name": "teste",
+    "status": "stopped",
+    "startedAt": "2026-10-19T02:29:33.446Z",
+    "endedAt": "2026-10-19T02:35:18.859Z",
+    "accounts": [
+      "wa1"
+    ],
+    "sent": 6,
+    "withoutWhatsapp": 2,
+    "errors": 0,
+    "queries": 5,
+    "error": null
+  }
+}

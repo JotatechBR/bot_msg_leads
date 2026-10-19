@@ -34,7 +34,8 @@ const FIELD_MASK_LEADS = [
 
 const FIELD_MASK_CIDADE = 'places.displayName,places.formattedAddress,places.viewport';
 
-const esperar = (seg) => new Promise((r) => setTimeout(r, seg * 1000));
+import { setTimeout as delay } from 'node:timers/promises';
+const esperar = (seg, signal) => delay(seg * 1000, undefined, { signal });
 
 function redeSocial(url) {
   try {
@@ -68,10 +69,11 @@ function paraLead(place) {
 }
 
 // Chamada à API com até 3 novas tentativas em falhas temporárias (rede, 429, 5xx)
-async function chamarApi(chave, fieldMask, body) {
+async function chamarApi(chave, fieldMask, body, signal) {
   for (let tentativa = 1; ; tentativa++) {
     let resp, dados;
     try {
+      signal?.throwIfAborted();
       resp = await fetch(URL_TEXT_SEARCH, {
         method: 'POST',
         headers: {
@@ -80,16 +82,18 @@ async function chamarApi(chave, fieldMask, body) {
           'X-Goog-FieldMask': fieldMask,
         },
         body: JSON.stringify(body),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(45000)]) : AbortSignal.timeout(45000),
       });
       dados = await resp.json().catch(() => ({}));
     } catch (err) {
-      if (tentativa <= 3) { await esperar(10 * tentativa); continue; }
+      if (signal?.aborted || err.name === 'AbortError') throw err;
+      if (tentativa <= 3) { await esperar(10 * tentativa, signal); continue; }
       throw new Error(`Google Maps: falha de rede - ${err.message}`);
     }
 
     if (resp.ok) return dados;
     if ((resp.status === 429 || resp.status >= 500) && tentativa <= 3) {
-      await esperar(10 * tentativa);
+      await esperar(10 * tentativa, signal);
       continue;
     }
     const erro = new Error(`Google Maps: ${dados.error?.message ?? `HTTP ${resp.status}`}`);
@@ -101,13 +105,13 @@ async function chamarApi(chave, fieldMask, body) {
   }
 }
 
-async function areaDaCidade(chave, cidade) {
+async function areaDaCidade(chave, cidade, signal) {
   const dados = await chamarApi(chave, FIELD_MASK_CIDADE, {
     textQuery: cidade,
     regionCode: 'BR',
     languageCode: 'pt-BR',
     pageSize: 1,
-  });
+  }, signal);
   const lugar = dados.places?.[0];
   if (!lugar?.viewport) throw new Error(`Não encontrei a cidade "${cidade}" no Google Maps.`);
   return { nome: lugar.formattedAddress ?? lugar.displayName?.text, ...lugar.viewport };
@@ -135,10 +139,10 @@ function podeDividir({ low, high }) {
  * `jaUsado(lead)` diz se a empresa já foi contatada (essas são descartadas).
  * `aoEvento(tipo, dado)` recebe: 'consulta' (chamada à API), 'area' (nome da cidade), 'dividiu' (áreas pendentes).
  */
-export async function* leads({ chave, termo, cidade, busca, jaUsado, aoEvento }) {
+export async function* leads({ chave, termo, cidade, busca, jaUsado, aoEvento, signal }) {
   if (!busca.areas) {
     aoEvento?.('consulta');
-    const area = await areaDaCidade(chave, cidade);
+    const area = await areaDaCidade(chave, cidade, signal);
     aoEvento?.('area', area.nome);
     busca.areas = [{ low: area.low, high: area.high, pageToken: null, brutos: 0 }];
     busca.fila = [];
@@ -146,6 +150,7 @@ export async function* leads({ chave, termo, cidade, busca, jaUsado, aoEvento })
   }
 
   while (true) {
+    signal?.throwIfAborted();
     while (busca.fila.length > 0) {
       const lead = busca.fila.shift();
       if (!jaUsado(lead)) yield lead;
@@ -169,7 +174,7 @@ export async function* leads({ chave, termo, cidade, busca, jaUsado, aoEvento })
     let dados;
     try {
       aoEvento?.('consulta');
-      dados = await chamarApi(chave, FIELD_MASK_LEADS, body);
+      dados = await chamarApi(chave, FIELD_MASK_LEADS, body, signal);
     } catch (err) {
       if (area.pageToken && err.status === 'INVALID_ARGUMENT') {
         area.pageToken = null; // token expirou: refaz essa área do início (já contatados são ignorados)

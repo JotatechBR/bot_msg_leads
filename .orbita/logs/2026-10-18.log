@@ -1,0 +1,33 @@
+18/10, 23:28:53  WARN     [PAINEL]  POST /api/campaigns/5f034991-099f-4d1e-ac8e-39fa40762a90/start: Esta campanha precisa de 1 conta(s) conectada(s). Conecte o WhatsApp na aba Contas antes de iniciar.
+18/10, 23:29:04  INFO     [WA1]  Conectando ao WhatsApp…
+18/10, 23:29:07  SUCCESS  [WA1]  WhatsApp conectado · +5511930955643.
+18/10, 23:29:33  INFO     [teste]  Campanha iniciada · nichos: odontologia, salao de beleza e loja de roupa · cidades: Penha sp, Osasco sp, Carrão sp, Tatuape Sp · contas: wa1.
+18/10, 23:29:33  INFO     [teste]  Buscando odontologia em Penha sp.
+18/10, 23:29:33  INFO     [teste]  Consulta 1 à API do Google Maps.
+18/10, 23:29:34  INFO     [teste]  Região encontrada: Penha de França, São Paulo - SP.
+18/10, 23:29:34  INFO     [teste]  Consulta 2 à API do Google Maps.
+18/10, 23:29:35  WARN     [WA1]  Dentista-Dr. Adriana Fachini · odontologia · +551126429570 · sem WhatsApp.
+18/10, 23:29:43  SUCCESS  [WA1]  Consultório odontológico - Dr. Wiliam Henrique · odontologia · +5511978075177 · mensagem enviada. Total: 1.
+18/10, 23:29:51  INFO     [teste]  Buscando salao de beleza e loja de roupa em Penha sp.
+18/10, 23:29:51  INFO     [teste]  Consulta 3 à API do Google Maps.
+18/10, 23:29:52  INFO     [teste]  Região encontrada: Penha de França, São Paulo - SP.
+18/10, 23:29:52  INFO     [teste]  Consulta 4 à API do Google Maps.
+18/10, 23:30:01  SUCCESS  [WA1]  Gracinha & Paulinho Moda e Beleza · salao de beleza e loja de roupa · +551135897544 · mensagem enviada. Total: 2.
+18/10, 23:30:08  INFO     [teste]  Consulta 5 à API do Google Maps.
+18/10, 23:30:13  SUCCESS  [WA1]  Dra. Kátia Batista · odontologia · +5511996301805 · mensagem enviada. Total: 3.
+18/10, 23:30:13  INFO     [WA1]  Rodada finalizada: 3 enviada(s). Próxima em 39s.
+18/10, 23:31:00  SUCCESS  [WA1]  D'Marthani Hair Visage · salao de beleza e loja de roupa · +5511967027972 · mensagem enviada. Total: 4.
+18/10, 23:31:05  WARN     [WA1]  OdontoCompany Penha · odontologia · +551126424050 · sem WhatsApp.
+18/10, 23:31:10  SUCCESS  [WA1]  + Mais Sorriso Penha · odontologia · +5511932923079 · mensagem enviada. Total: 5.
+18/10, 23:31:27  SUCCESS  [WA1]  MP Beauty Studio · salao de beleza e loja de roupa · +5511983659374 · mensagem enviada. Total: 6.
+18/10, 23:31:27  INFO     [WA1]  Rodada finalizada: 3 enviada(s). Próxima em 249s.
+18/10, 23:35:18  WARN     [teste]  Parada solicitada. Nenhum novo envio será iniciado; aguardando operações em andamento.
+18/10, 23:35:18  INFO     [teste]  Campanha parada pelo usuário. O histórico foi preservado.
+18/10, 23:35:18  INFO     [teste]  Resumo · 6 enviadas · 2 sem WhatsApp · 0 erros · 5 consultas à API.
+18/10, 23:36:47  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…
+18/10, 23:36:47  INFO     [WA1]  Conexão encerrada. Sessão mantida para a próxima conexão.
+18/10, 23:39:05  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…
+18/10, 23:47:38  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…
+18/10, 23:47:57  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…
+18/10, 23:51:54  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…
+18/10, 23:59:14  INFO     [SERVIDOR]  Encerrando campanhas e conexões. Aguarde a finalização dos envios em andamento…

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "5f034991-099f-4d1e-ac8e-39fa40762a90",
+    "name": "teste",
+    "niches": [
+      "odontologia",
+      "salao de beleza e loja de roupa"
+    ],
+    "cities": [
+      "Penha sp",
+      "Osasco sp",
+      "Carrão sp",
+      "Tatuape Sp"
+    ],
+    "accounts": 1,
+    "status": "rascunho",
+    "createdAt": "2026-10-19T02:16:11.156Z"
+  }
+]
