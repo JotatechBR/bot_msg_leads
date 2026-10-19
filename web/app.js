@@ -97,6 +97,10 @@ function render({ animate = false, focus = false } = {}) {
     guide: guideView,
   };
   main.innerHTML = views[state.route]();
+  if (state.data.readOnly) {
+    main.insertAdjacentHTML('afterbegin', `<div class="notice notice-soft">${icon('info')}<p>Painel publicado para consulta. Para editar, conectar WhatsApp e enviar campanhas, abra a versão local com <code>npm start</code>.</p></div>`);
+    for (const button of main.querySelectorAll('[data-connect-account], [data-disconnect-account], [data-start-campaign], [data-stop-campaign], button[type="submit"]')) button.disabled = true;
+  }
   runtimeSignature = signature(state.data.runtime);
   main.classList.toggle('page-enter', animate);
   if (state.route === 'leads') updateSelection();
@@ -145,7 +149,7 @@ function applyRuntime(runtime, force = false) {
 
 function serverStatus(connected) {
   const status = document.querySelector('.local-status');
-  status.innerHTML = connected ? '<span></span> Servidor conectado' : '<span></span> Reconectando ao servidor';
+  status.innerHTML = connected ? `<span></span> ${state.data?.environment === 'vercel' ? 'Publicado na Vercel' : 'Servidor local conectado'}` : '<span></span> Reconectando ao servidor';
   status.classList.toggle('connection-error', !connected);
 }
 
@@ -167,7 +171,7 @@ function startPolling() {
 
 function startLiveEvents() {
   if (liveEvents || livePolling) return;
-  // Use polling when the frontend API proxy does not stream events.
+  // The published API uses polling; localhost streams events directly.
   if (state.data.liveTransport === 'poll') { startPolling(); return; }
   liveEvents = new EventSource('/api/events');
   liveEvents.onmessage = (event) => {
@@ -211,6 +215,10 @@ async function refresh({ initial = false, manual = false } = {}) {
   try {
     rememberEditing();
     state.data = await request('/api/data');
+    const published = state.data.environment === 'vercel';
+    document.querySelector('.workspace-local').textContent = published ? 'VERCEL' : 'LOCAL';
+    document.querySelector('.profile small').textContent = published ? 'Painel publicado' : 'Ambiente local';
+    serverStatus(true);
     const existing = new Set(state.data.leads.map((lead) => lead.id));
     state.selected = new Set([...state.selected].filter((id) => existing.has(id)));
     const readOnlyView = ['overview', 'accounts', 'leads', 'campaigns'].includes(state.route) && location.hash !== '#campaigns/new';
@@ -281,7 +289,7 @@ async function copy(text, success = 'Copiado para a área de transferência.') {
   try {
     if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
     else {
-      // HTTP over a LAN lacks the secure context required by the Clipboard API.
+      // Some browsers do not provide the Clipboard API.
       const previousFocus = document.activeElement;
       const field = document.createElement('textarea');
       field.value = text;

@@ -1,6 +1,6 @@
 # Órbita · Seu espaço de prospecção
 
-Interface local para o bot de leads do Google Maps e WhatsApp. O painel usa HTML, CSS e JavaScript nativos e um servidor Node.js, sem novas dependências de produção.
+Painel para o bot de leads do Google Maps e WhatsApp. Use `npm start` para executar localmente e a integração com o GitHub para publicar o painel na Vercel.
 
 ## Abrir o painel
 
@@ -10,61 +10,17 @@ Interface local para o bot de leads do Google Maps e WhatsApp. O painel usa HTML
 npm start
 ```
 
-Acesse **http://localhost:3001** no navegador. Para desenvolvimento, `npm run dev` reinicia o servidor quando os arquivos mudam. Recarregue o navegador após editar a interface. Se a porta estiver ocupada, use `PORT=3002 npm start`.
+Acesse **http://localhost:3001** no navegador. O projeto inicia somente em localhost, sem opções de acesso pela rede. Para desenvolvimento, `npm run dev` reinicia o servidor quando os arquivos mudam. Recarregue o navegador após editar a interface. Se a porta estiver ocupada, use `PORT=3002 npm start`.
 
-## Publicar o painel na Vercel
+## Publicar na Vercel
 
-O arquivo `vercel.json` publica a pasta `web/`, que contém `index.html`, e encaminha `/api/*` para `api/proxy.js`. A Vercel hospeda o painel; o motor das campanhas e as sessões do WhatsApp continuam em um servidor Node persistente no Ubuntu ou em uma VPS.
+Importe o repositório na Vercel e faça o deploy usando a raiz do projeto. O `vercel.json` já aponta para `web/` e encaminha as chamadas da API para `api/index.js`. A instalação das dependências usa o fluxo padrão da plataforma.
 
-1. Execute o bot em um servidor Ubuntu/VPS com Node.js e armazenamento persistente, usando `npm start`. Configure seu domínio HTTPS em um proxy reverso que encaminhe as requisições para `http://127.0.0.1:3001`.
-2. Na Vercel, use a raiz deste repositório como **Root Directory** e **Other** como **Framework Preset**. O `vercel.json` define a pasta de saída como `web`, sem instalação nem comando de build.
-3. Em **Settings → Environment Variables**, configure `ORBITA_BACKEND_URL` com a origem HTTPS do bot, por exemplo `https://api.seudominio.com`, sem `/api` no final.
-4. Publique novamente. O painel usa o mesmo domínio da Vercel para suas chamadas e o proxy as encaminha ao servidor do bot.
+Não há configuração de acesso por rede, URL de servidor externo, banco Redis ou worker adicional.
 
-Sem `ORBITA_BACKEND_URL`, o painel informa a configuração pendente. A chave do Google e as sessões permanecem no servidor do bot. O endereço precisa apontar para uma API HTTPS em execução; não use a chave do Google nem o domínio do próprio painel da Vercel como valor.
+**Limite desta publicação:** na Vercel, o painel permite consultar o histórico e os rascunhos incluídos no deploy. A edição dos arquivos, o pareamento do WhatsApp e a execução contínua de campanhas permanecem disponíveis na execução local com `npm start`. O painel publicado informa essa condição e desativa os controles de alteração.
 
-## Usar um servidor próprio com HTTPS
-
-O projeto executa diretamente com Node.js:
-
-```bash
-npm start
-```
-
-Para usar um domínio próprio, configure no `.env` a origem HTTPS do servidor:
-
-```dotenv
-ORBITA_URL_PUBLICA=https://api.seudominio.com
-```
-
-Configure um proxy reverso no mesmo servidor para encaminhar as requisições desse domínio para `http://127.0.0.1:3001`, preservando o cabeçalho `Host` e enviando `X-Forwarded-Proto: https`. O HTTPS é atendido pelo proxy; definir a variável, por si só, não publica o servidor nem configura domínio ou certificado.
-
-Se o painel estiver na Vercel, use essa mesma origem como `ORBITA_BACKEND_URL` nas variáveis do projeto da Vercel. O acesso permanece sem usuário e senha, conforme solicitado. O servidor e o armazenamento das sessões precisam permanecer disponíveis para executar campanhas.
-
-Status, QR code e logs usam eventos em tempo real no acesso direto. Pelo proxy da Vercel, são atualizados a cada dois segundos.
-
-## Acessar somente pela rede local no Ubuntu
-
-```bash
-npm run rede
-```
-
-Esse comando escuta em `0.0.0.0` e permite o uso do painel por outros dispositivos da rede privada, sem usuário e senha. O endereço de rede aparece no terminal. Na configuração atual deste Ubuntu:
-
-```text
-http://192.168.15.104:3001
-```
-
-Se o UFW estiver ativo e bloquear a porta, execute no terminal do Ubuntu:
-
-```bash
-sudo ufw allow from 192.168.15.0/24 to any port 3001 proto tcp
-sudo ufw status
-```
-
-A regra libera a porta somente para essa faixa de rede. Se mudar a porta com `PORT`, ajuste também a regra. Se mudar de rede, use o novo IP e a nova faixa; `hostname -I` mostra os endereços do computador.
-
-Você pode definir `ORBITA_REDE=1` no `.env` para habilitar o modo de rede local com `npm start`. As opções antigas `ORBITA_USUARIO`, `ORBITA_SENHA` e o arquivo `.orbita/acesso-rede.json` deixaram de ser usados.
+O motor atual mantém sessões em disco e conexões contínuas com o WhatsApp. O deploy padrão por [Vercel Functions](https://vercel.com/docs/functions/limitations) executa requisições com duração limitada; ele não equivale a manter `npm start` em execução. Por isso, a API publicada não inicia tarefas em segundo plano que seriam interrompidas após a requisição. Os dados publicados refletem os arquivos do último deploy, não as alterações feitas depois no seu computador.
 
 ## Como funciona
 
@@ -125,12 +81,12 @@ O painel e a execução de envios pelo terminal compartilham um bloqueio em `.or
 
 O visual combina verde floresta `#203E35`, marfim `#F5F6F1` e sálvia `#D7E7AD`. O espaçamento usa uma escala de 4 px, com agrupamentos compactos e separações maiores entre áreas. A fonte Ubuntu Sans é servida localmente; a licença está em `web/assets/FONT-LICENSE.txt`.
 
-`web/index.html` define a estrutura; `web/styles.css` contém os tokens e estilos; `web/components.js`, `web/views.js` e `web/runtime-views.js` renderizam a interface; `web/app.js` coordena as interações e os eventos em tempo real. `server.js` serve a API, enquanto `bot/runtime.js`, `bot/whatsapp.js`, `bot/campaign.js`, `bot/logger.js` e `bot/storage.js` gerenciam conexões, campanhas, logs e persistência.
+`web/index.html` define a estrutura; `web/styles.css` contém os tokens e estilos; `web/components.js`, `web/views.js` e `web/runtime-views.js` renderizam a interface; `web/app.js` coordena as interações e os eventos em tempo real. `server.js` serve a aplicação local e `api/index.js` fornece as consultas na Vercel, enquanto `bot/runtime.js`, `bot/whatsapp.js`, `bot/campaign.js`, `bot/logger.js` e `bot/storage.js` gerenciam conexões, campanhas, logs e persistência.
 
 As animações usam entradas breves, feedback de clique e uma abertura com órbitas. Não há carregamento de fontes, imagens ou scripts de terceiros.
 
-No modo padrão, o servidor aceita somente conexões do próprio computador. `npm run rede` permite a rede privada. Para acesso externo, use um servidor próprio com domínio HTTPS e configure `ORBITA_URL_PUBLICA`. O acesso funciona sem login. A validação de origem e a lista explícita de arquivos públicos permanecem ativas. Chaves do Google e arquivos de credenciais do WhatsApp não são enviados ao navegador; o QR temporário é exibido somente para o pareamento.
+O servidor local inicia somente em localhost. A publicação pública usa o domínio da Vercel e permanece sem login. Chaves do Google e credenciais do WhatsApp não são enviadas ao navegador.
 
 ## Validação
 
-A validação das mudanças de conexão, execução, logs e acessos local e público será feita por você, conforme solicitado. Não foram executados testes dessas alterações.
+Os testes ficam com você, conforme solicitado. Não foram executados testes, iniciado o bot nem realizado deploy nesta alteração.

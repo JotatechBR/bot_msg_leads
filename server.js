@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { BotRuntime } from './bot/runtime.js';
 import { googleKey } from './bot/campaign.js';
-import { networkConfig, isLoopback, isPrivateNetwork } from './bot/network.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FILES = {
@@ -92,7 +91,8 @@ function validateList(value, label) {
   return [...new Set(value.map((item) => item.trim()))];
 }
 
-export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), access = networkConfig() } = {}) {
+export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), deployment = 'local' } = {}) {
+  const published = deployment === 'vercel';
   const streams = new Set();
   let pendingWrite = Promise.resolve();
   function write(task) {
@@ -108,6 +108,16 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), acc
   }
   const draftsPath = path.join(root, '.orbita', 'campanhas.json');
 
+  async function data() {
+    const [history, campaigns, template] = await Promise.all([
+      jsonFile(path.join(root, 'historico.json'), { empresas: {}, buscas: {} }),
+      jsonFile(draftsPath, []),
+      fs.readFile(path.join(root, 'mensagem.txt'), 'utf8').catch((error) => { if (error.code === 'ENOENT') return ''; throw error; }),
+    ]);
+    const state = runtime.snapshot();
+    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, apiConfigured: Boolean(googleKey(root)), updatedAt: new Date().toISOString() };
+  }
+
   const server = http.createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -118,17 +128,17 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), acc
       res.end(JSON.stringify(data));
     };
     try {
-      const local = isLoopback(req.socket.remoteAddress);
-      const forwardedProtocol = String(req.headers['x-forwarded-proto'] ?? '').split(',')[0].trim();
-      const protocol = access.publicOrigin && local && forwardedProtocol === 'https' ? 'https' : 'http';
-      const url = new URL(req.url, `${protocol}://${req.headers.host ?? 'localhost'}`);
-      if (!access.hosts.has(url.hostname)) throw failure('Host não permitido. Use o endereço mostrado no terminal do servidor.', 403);
-      if (!local && (!access.enabled || !isPrivateNetwork(req.socket.remoteAddress))) throw failure('Acesso permitido somente pelo computador ou pela rede local.', 403);
+      const url = new URL(req.url, `${published ? 'https' : 'http'}://${req.headers.host ?? 'localhost'}`);
+      if (!published && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw failure('Acesse pelo endereço localhost mostrado no terminal.', 403);
       if (req.headers.origin && req.headers.origin !== url.origin) throw failure('Origem não permitida.', 403);
       if (req.headers['sec-fetch-site'] === 'cross-site') throw failure('Origem não permitida.', 403);
+      if (published && url.pathname.startsWith('/api/') && !['GET', 'HEAD'].includes(req.method)) {
+        throw failure('O deploy padrão da Vercel permite consultar este painel. Para editar, conectar WhatsApp e executar campanhas, inicie o projeto localmente com npm start.', 501);
+      }
 
       if (req.method === 'GET' && url.pathname === '/api/runtime') return sendJson(200, runtime.snapshot());
       if (req.method === 'GET' && url.pathname === '/api/events') {
+        if (published) return sendJson(404, { error: 'Use /api/runtime para consultar o estado.' });
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
         streams.add(res);
         let scheduled;
@@ -165,13 +175,7 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), acc
       }
 
       if (req.method === 'GET' && url.pathname === '/api/data') {
-        const [history, campaigns, template] = await Promise.all([
-          jsonFile(path.join(root, 'historico.json'), { empresas: {}, buscas: {} }),
-          jsonFile(draftsPath, []),
-          fs.readFile(path.join(root, 'mensagem.txt'), 'utf8').catch((error) => { if (error.code === 'ENOENT') return ''; throw error; }),
-        ]);
-        const state = runtime.snapshot();
-        return sendJson(200, { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: 'sse', apiConfigured: Boolean(googleKey(root)), updatedAt: new Date().toISOString() });
+        return sendJson(200, await data());
       }
 
       if (req.method === 'POST' && url.pathname === '/api/campaigns') {
@@ -229,19 +233,13 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), acc
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.loadEnvFile(path.join(ROOT, '.env')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const port = Number(process.env.PORT || 3001);
-  const access = networkConfig({ enabled: process.argv.includes('--rede') || process.env.ORBITA_REDE === '1', publicUrl: process.env.ORBITA_URL_PUBLICA || '' });
-  const server = createApp({ access });
+  const server = createApp();
   server.on('error', (error) => {
     console.error(error.code === 'EADDRINUSE' ? `A porta ${port} está em uso. Experimente PORT=${port + 1} npm start.` : error.message);
     process.exitCode = 1;
   });
-  server.listen(port, access.host, () => {
+  server.listen(port, 'localhost', () => {
     console.log(`\n  Órbita · seu espaço de prospecção\n  Local: http://localhost:${port}`);
-    if (access.publicOrigin) console.log(`  Origem HTTPS configurada: ${access.publicOrigin}`);
-    if (access.enabled) {
-      for (const address of access.addresses) console.log(`  Rede:  http://${address}:${port}`);
-      console.log('\n  Acesso habilitado na rede local, sem usuário e senha.');
-    } else console.log('\n  Para acessar de outro dispositivo: npm run rede');
     console.log('\n  Ctrl+C para encerrar.\n');
   });
   let shuttingDown = false;
