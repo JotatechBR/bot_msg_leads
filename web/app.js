@@ -23,7 +23,12 @@ document.documentElement.dataset.motion = readPreference('orbita-motion') === 'o
 
 async function request(url, options = {}) {
   const response = await fetch(url, { ...options, signal: AbortSignal.timeout(10000), headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers } });
-  const result = await response.json();
+  let result;
+  try { result = await response.json(); }
+  catch {
+    // Resposta que não é do server.js (ex.: erro da Vercel quando a VPS está fora do ar ou mal configurada)
+    throw new Error(`O painel não conseguiu falar com o servidor (HTTP ${response.status}). Confira se a VPS está ligada e se o endereço no vercel.json está correto.`);
+  }
   if (response.status === 401 && result.login) {
     showLogin();
     throw Object.assign(new Error(result.error), { name: 'LoginRequired' });

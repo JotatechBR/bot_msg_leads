@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://COLOQUE-O-IP-DA-VPS.sslip.io/api/:path*"
+      "destination": "https://3-12-132-247.sslip.io/api/:path*"
     }
   ],
   "headers": [
