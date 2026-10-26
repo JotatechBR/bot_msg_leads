@@ -26,7 +26,7 @@ test('a fila exclui empresas e telefones contatados e elimina duplicatas entre b
   assert.deepEqual(result.searches.map((item) => item.queued), [1, 1]);
 });
 
-async function fixture(t) {
+async function fixture(t, options = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'orbita-test-'));
   await fs.mkdir(path.join(root, 'sessoes', 'wa1'), { recursive: true });
   await fs.mkdir(path.join(root, 'web'), { recursive: true });
@@ -36,7 +36,7 @@ async function fixture(t) {
   await fs.writeFile(path.join(root, '.env'), 'API_GOOGLE_MAPS=private-api-key-test\n');
   await fs.writeFile(path.join(root, 'sessoes', 'wa1', 'creds.json'), '{"private":"session-secret-test"}');
   await fs.writeFile(path.join(root, 'web', 'index.html'), '<html lang="pt-BR">Órbita</html>');
-  const app = createApp({ root });
+  const app = createApp({ root, ...options });
   app.listen(0, '127.0.0.1');
   await once(app, 'listening');
   const base = `http://127.0.0.1:${app.address().port}`;
@@ -97,4 +97,60 @@ test('valida entradas e salva modelos somente com uma edição válida', async (
   assert.equal((await put('Olá, {nome}! Tudo bem?\n---\nOutra versão de mensagem.')).status, 200);
   assert.equal(await fs.readFile(path.join(root, 'mensagem.txt'), 'utf8'), 'Olá, {nome}! Tudo bem?\n---\nOutra versão de mensagem.\n');
   assert.equal((await fetch(base + '/api/template', { method: 'PUT', headers: { 'Content-Type': 'text/plain' }, body: 'message' })).status, 415);
+});
+
+const login = (base, password, headers = {}) => fetch(`${base}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ password }) });
+const sessionCookie = (response) => response.headers.get('set-cookie')?.split(';')[0];
+
+test('com PAINEL_SENHA, a API exige login e a sessão abre só com a senha correta', async (t) => {
+  const { base, root, post } = await fixture(t, { password: 'senha-forte-teste' });
+  const blocked = await fetch(`${base}/api/data`);
+  assert.equal(blocked.status, 401);
+  const blockedBody = await blocked.json();
+  assert.equal(blockedBody.login, true);
+  assert.ok(!JSON.stringify(blockedBody).includes('Empresa real'));
+  assert.equal((await post(campaign)).status, 401);
+  assert.deepEqual(await (await fetch(`${base}/api/session`)).json(), { authRequired: true, authenticated: false });
+
+  const wrong = await login(base, 'errada');
+  assert.equal(wrong.status, 401);
+  assert.equal(wrong.headers.get('set-cookie'), null);
+
+  const right = await login(base, 'senha-forte-teste');
+  assert.equal(right.status, 200);
+  const cookie = sessionCookie(right);
+  assert.match(right.headers.get('set-cookie'), /HttpOnly; SameSite=Lax/);
+  const data = await (await fetch(`${base}/api/data`, { headers: { Cookie: cookie } })).json();
+  assert.equal(data.authRequired, true);
+  assert.equal(data.leads[0].name, 'Empresa real');
+  assert.equal((await post(campaign, { Cookie: cookie })).status, 201);
+
+  const forged = cookie.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+  assert.equal((await fetch(`${base}/api/data`, { headers: { Cookie: forged } })).status, 401);
+  const logout = await fetch(`${base}/api/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie } });
+  assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
+  await fs.access(path.join(root, '.orbita', 'sessao.key'));
+});
+
+test('bloqueia tentativas de senha repetidas', async (t) => {
+  const { base } = await fixture(t, { password: 'senha-forte-teste' });
+  for (let i = 0; i < 10; i++) assert.equal((await login(base, `errada-${i}`)).status, 401);
+  assert.equal((await login(base, 'senha-forte-teste')).status, 429);
+});
+
+test('no modo servidor aceita o host público e a origem da Vercel, com cookie seguro', async (t) => {
+  const vercel = 'https://orbita-teste.vercel.app';
+  const { base, post } = await fixture(t, { deployment: 'server', password: 'senha-forte-teste', allowedOrigins: [vercel] });
+  const viaProxy = { Host: '3-85-12-4.sslip.io', 'X-Forwarded-Proto': 'https', Origin: vercel };
+  const right = await login(base, 'senha-forte-teste', viaProxy);
+  assert.equal(right.status, 200);
+  assert.match(right.headers.get('set-cookie'), /; Secure$/);
+  const cookie = sessionCookie(right);
+  const status = await new Promise((resolve, reject) => {
+    const req = http.get(base + '/api/data', { headers: { Host: '3-85-12-4.sslip.io', Cookie: cookie } }, (response) => { response.resume(); resolve(response.statusCode); });
+    req.on('error', reject);
+  });
+  assert.equal(status, 200);
+  assert.equal((await post(campaign, { ...viaProxy, Cookie: cookie })).status, 201);
+  assert.equal((await post(campaign, { ...viaProxy, Origin: 'https://other.example', Cookie: cookie })).status, 403);
 });

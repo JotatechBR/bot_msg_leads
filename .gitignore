@@ -7,3 +7,11 @@ sessoes/
 auth_whatsapp/
 
 
+
+# Segredos do painel: chave que assina os logins e sessões de WhatsApp arquivadas
+.orbita/sessao.key
+.orbita/runtime.lock
+.orbita/sessoes-anteriores/
+
+# Segredos: chave da API do Google e senha do painel
+.env

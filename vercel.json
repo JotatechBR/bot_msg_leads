@@ -3,15 +3,10 @@
   "framework": null,
   "buildCommand": "",
   "outputDirectory": "web",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "{historico.json,mensagem.txt,.orbita/campanhas.json,.orbita/execucoes.json}"
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/:route*",
-      "destination": "/api/index?route=:route*"
+      "source": "/api/:path*",
+      "destination": "https://COLOQUE-O-IP-DA-VPS.sslip.io/api/:path*"
     }
   ],
   "headers": [

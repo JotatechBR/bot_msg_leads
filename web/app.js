@@ -15,6 +15,7 @@ let runtimeSignature = '';
 let liveEvents;
 let livePolling;
 let pollingInFlight = false;
+let loginVisible = false;
 
 function readPreference(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function savePreference(key, value) { try { localStorage.setItem(key, value); } catch { /* The preference still applies for this visit. */ } }
@@ -23,8 +24,71 @@ document.documentElement.dataset.motion = readPreference('orbita-motion') === 'o
 async function request(url, options = {}) {
   const response = await fetch(url, { ...options, signal: AbortSignal.timeout(10000), headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers } });
   const result = await response.json();
+  if (response.status === 401 && result.login) {
+    showLogin();
+    throw Object.assign(new Error(result.error), { name: 'LoginRequired' });
+  }
   if (!response.ok) throw new Error(result.error || 'Não foi possível concluir a operação.');
   return result;
+}
+
+// O servidor online (VPS) pede senha; o npm start local sem PAINEL_SENHA nunca chega aqui.
+function stopLiveUpdates() {
+  liveEvents?.close();
+  liveEvents = undefined;
+  clearInterval(livePolling);
+  livePolling = undefined;
+}
+
+function showLogin(message = '') {
+  if (loginVisible) return;
+  loginVisible = true;
+  stopLiveUpdates();
+  state.data = null;
+  document.querySelector('#logout-button')?.remove();
+  document.querySelector('#navigation').innerHTML = navigation(null, currentRoute());
+  document.querySelector('.local-status').innerHTML = '<span></span> Aguardando login';
+  main.innerHTML = `<section class="load-error login-screen">${icon('lock')}<h1>Bem-vindo de volta.</h1><p>Entre com a senha do painel para conectar o WhatsApp e acompanhar suas campanhas.</p><form id="login-form" class="login-form" novalidate><label class="field-label" for="login-password">Senha do painel<input id="login-password" name="password" type="password" autocomplete="current-password" required /></label><p class="form-error" role="alert"${message ? '' : ' hidden'}>${h(message)}</p><button class="button button-primary" type="submit">${icon('arrow')} Entrar</button></form></section>`;
+  main.querySelector('#login-password').focus();
+}
+
+async function submitLogin(form) {
+  const button = form.querySelector('button[type="submit"]');
+  const errorElement = form.querySelector('[role="alert"]');
+  const password = form.querySelector('#login-password').value;
+  if (!password) {
+    errorElement.textContent = 'Digite a senha do painel.';
+    errorElement.hidden = false;
+    return;
+  }
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  errorElement.hidden = true;
+  try {
+    await request('/api/login', { method: 'POST', body: JSON.stringify({ password }) });
+    loginVisible = false;
+    main.innerHTML = '<div class="loading-screen" role="status"><span class="loading-orbit"></span><p>Organizando suas oportunidades…</p></div>';
+    await refresh({ initial: true });
+  } catch (error) {
+    errorElement.textContent = error.name === 'TimeoutError' ? 'O servidor demorou para responder. Tente novamente.' : error.message;
+    errorElement.hidden = false;
+    form.querySelector('#login-password').select();
+  } finally {
+    if (button.isConnected) { button.disabled = false; button.removeAttribute('aria-busy'); }
+  }
+}
+
+async function logout() {
+  try { await request('/api/logout', { method: 'POST', body: '{}' }); }
+  catch { /* A sessão expira sozinha; a tela de login aparece de qualquer forma. */ }
+  showLogin();
+}
+
+function syncLogoutButton() {
+  const existing = document.querySelector('#logout-button');
+  if (!state.data?.authRequired) { existing?.remove(); return; }
+  if (existing) return;
+  document.querySelector('#refresh-button').insertAdjacentHTML('afterend', `<button class="icon-button" id="logout-button" aria-label="Sair do painel" title="Sair do painel">${icon('logout')}</button>`);
 }
 
 function toast(message, error = false) {
@@ -149,7 +213,8 @@ function applyRuntime(runtime, force = false) {
 
 function serverStatus(connected) {
   const status = document.querySelector('.local-status');
-  status.innerHTML = connected ? `<span></span> ${state.data?.environment === 'vercel' ? 'Publicado na Vercel' : 'Servidor local conectado'}` : '<span></span> Reconectando ao servidor';
+  const labels = { vercel: 'Publicado na Vercel', server: 'Servidor online conectado', local: 'Servidor local conectado' };
+  status.innerHTML = connected ? `<span></span> ${labels[state.data?.environment] ?? labels.local}` : '<span></span> Reconectando ao servidor';
   status.classList.toggle('connection-error', !connected);
 }
 
@@ -159,7 +224,7 @@ async function pollRuntime() {
   try {
     applyRuntime(await request('/api/runtime'));
     serverStatus(true);
-  } catch { serverStatus(false); }
+  } catch { if (!loginVisible) serverStatus(false); }
   finally { pollingInFlight = false; }
 }
 
@@ -207,7 +272,7 @@ async function runtimeAction(button, url, { body = {}, message } = {}) {
 }
 
 async function refresh({ initial = false, manual = false } = {}) {
-  if (loading) return;
+  if (loading || (loginVisible && !initial)) return;
   loading = true;
   const button = document.querySelector('#refresh-button');
   button.disabled = true;
@@ -215,9 +280,10 @@ async function refresh({ initial = false, manual = false } = {}) {
   try {
     rememberEditing();
     state.data = await request('/api/data');
-    const published = state.data.environment === 'vercel';
-    document.querySelector('.workspace-local').textContent = published ? 'VERCEL' : 'LOCAL';
-    document.querySelector('.profile small').textContent = published ? 'Painel publicado' : 'Ambiente local';
+    const environment = state.data.environment;
+    document.querySelector('.workspace-local').textContent = { vercel: 'VERCEL', server: 'ONLINE' }[environment] ?? 'LOCAL';
+    document.querySelector('.profile small').textContent = { vercel: 'Painel publicado', server: 'Servidor online' }[environment] ?? 'Ambiente local';
+    syncLogoutButton();
     serverStatus(true);
     const existing = new Set(state.data.leads.map((lead) => lead.id));
     state.selected = new Set([...state.selected].filter((id) => existing.has(id)));
@@ -236,6 +302,7 @@ async function refresh({ initial = false, manual = false } = {}) {
     startLiveEvents();
     if (manual) toast('Dados atualizados.');
   } catch (error) {
+    if (error.name === 'LoginRequired') return;
     if (!state.data) main.innerHTML = `<section class="load-error">${icon('compass')}<h1>Vamos retomar a conexão.</h1><p>${h(error.name === 'TimeoutError' ? 'O servidor demorou para responder. Confirme que npm start está em execução e tente novamente.' : error.message)}</p><button class="button button-primary" id="retry-load">${icon('refresh')} Tentar novamente</button></section>`;
     else if (manual) toast('Não foi possível atualizar os dados. Tente novamente.', true);
   } finally {
@@ -352,6 +419,7 @@ document.addEventListener('click', (event) => {
   if (!target) return;
   if (target.closest('#sidebar') && target.matches('a[href^="#"]')) toggleSidebar(false);
   if (target.id === 'retry-load') refresh({ initial: true });
+  if (target.id === 'logout-button') logout();
   if (target.dataset.connectAccount) runtimeAction(target, `/api/accounts/${target.dataset.connectAccount}/connect`, { body: { reset: target.dataset.reset === 'true' }, message: 'Conexão iniciada. Aguarde o QR code ou a reconexão da sessão.' });
   if (target.dataset.disconnectAccount) runtimeAction(target, `/api/accounts/${target.dataset.disconnectAccount}/disconnect`, { message: 'Conta desconectada. A sessão foi mantida.' });
   if (target.dataset.startCampaign) runtimeAction(target, `/api/campaigns/${target.dataset.startCampaign}/start`, { message: 'Campanha iniciada. Acompanhe os resultados no painel e no terminal.' });
@@ -440,6 +508,11 @@ document.addEventListener('change', (event) => {
 
 document.addEventListener('submit', async (event) => {
   const form = event.target;
+  if (form.id === 'login-form') {
+    event.preventDefault();
+    await submitLogin(form);
+    return;
+  }
   if (!['campaign-form', 'message-form'].includes(form.id)) return;
   event.preventDefault();
   const button = form.querySelector('button[type="submit"]');

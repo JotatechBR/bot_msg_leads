@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { BotRuntime } from './bot/runtime.js';
 import { googleKey } from './bot/campaign.js';
+import { createAuth } from './bot/auth.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FILES = {
@@ -91,8 +92,19 @@ function validateList(value, label) {
   return [...new Set(value.map((item) => item.trim()))];
 }
 
-export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), deployment = 'local' } = {}) {
+const listFromEnv = (value) => String(value ?? '').split(',').map((item) => item.trim().replace(/\/$/, '')).filter(Boolean);
+
+// deployment: 'local' (npm start no PC, só localhost), 'server' (VPS atrás do Caddy, com login) ou 'vercel' (somente leitura)
+export function createApp({
+  root = ROOT,
+  runtime = new BotRuntime({ root }),
+  deployment = process.env.ORBITA_MODO === 'servidor' ? 'server' : 'local',
+  password = process.env.PAINEL_SENHA,
+  allowedOrigins = listFromEnv(process.env.PAINEL_ORIGENS),
+} = {}) {
   const published = deployment === 'vercel';
+  const server = deployment === 'server';
+  const auth = createAuth({ root, password });
   const streams = new Set();
   let pendingWrite = Promise.resolve();
   function write(task) {
@@ -115,10 +127,10 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), dep
       fs.readFile(path.join(root, 'mensagem.txt'), 'utf8').catch((error) => { if (error.code === 'ENOENT') return ''; throw error; }),
     ]);
     const state = runtime.snapshot();
-    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, apiConfigured: Boolean(googleKey(root)), updatedAt: new Date().toISOString() };
+    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, authRequired: auth.enabled, apiConfigured: Boolean(googleKey(root)), updatedAt: new Date().toISOString() };
   }
 
-  const server = http.createServer(async (req, res) => {
+  const app = http.createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -128,12 +140,34 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), dep
       res.end(JSON.stringify(data));
     };
     try {
-      const url = new URL(req.url, `${published ? 'https' : 'http'}://${req.headers.host ?? 'localhost'}`);
-      if (!published && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw failure('Acesse pelo endereço localhost mostrado no terminal.', 403);
-      if (req.headers.origin && req.headers.origin !== url.origin) throw failure('Origem não permitida.', 403);
+      // No modo servidor o Node só escuta em localhost; quem chega aqui é o Caddy, que informa o protocolo original.
+      const protocol = published ? 'https' : server ? String(req.headers['x-forwarded-proto'] ?? 'http').split(',')[0].trim() : 'http';
+      const url = new URL(req.url, `${protocol}://${req.headers.host ?? 'localhost'}`);
+      const secure = url.protocol === 'https:';
+      if (deployment === 'local' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw failure('Acesse pelo endereço localhost mostrado no terminal.', 403);
+      // O painel na Vercel repassa /api para cá: a origem do navegador é o domínio da Vercel (PAINEL_ORIGENS).
+      if (req.headers.origin && req.headers.origin !== url.origin && !allowedOrigins.includes(req.headers.origin)) throw failure('Origem não permitida.', 403);
       if (req.headers['sec-fetch-site'] === 'cross-site') throw failure('Origem não permitida.', 403);
       if (published && url.pathname.startsWith('/api/') && !['GET', 'HEAD'].includes(req.method)) {
         throw failure('O deploy padrão da Vercel permite consultar este painel. Para editar, conectar WhatsApp e executar campanhas, inicie o projeto localmente com npm start.', 501);
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/session') {
+        return sendJson(200, { authRequired: auth.enabled, authenticated: auth.authenticated(req) });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/login') {
+        const body = await bodyJson(req);
+        const cookie = auth.login(body.password, { secure });
+        if (cookie) res.setHeader('Set-Cookie', cookie);
+        runtime.logger.info('PAINEL', 'Login realizado no painel.');
+        return sendJson(200, { authenticated: true });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/logout') {
+        res.setHeader('Set-Cookie', auth.logout({ secure }));
+        return sendJson(200, { authenticated: false });
+      }
+      if (url.pathname.startsWith('/api/') && !auth.authenticated(req)) {
+        return sendJson(401, { error: 'Entre com a senha do painel para continuar.', login: true });
       }
 
       if (req.method === 'GET' && url.pathname === '/api/runtime') return sendJson(200, runtime.snapshot());
@@ -218,21 +252,25 @@ export function createApp({ root = ROOT, runtime = new BotRuntime({ root }), dep
       else if (req.method !== 'GET') runtime.logger.warn('PAINEL', `${req.method} ${req.url}: ${error.message}`);
     }
   });
-  server.runtime = runtime;
-  server.shutdown = async () => {
+  app.runtime = runtime;
+  app.shutdown = async () => {
     try { await runtime.shutdown(); }
     finally {
       for (const stream of streams) stream.end();
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise((resolve) => app.close(resolve));
     }
   };
-  server.on('close', () => { runtime.shutdown().catch((error) => runtime.logger.error('SERVIDOR', error.message)); });
-  return server;
+  app.on('close', () => { runtime.shutdown().catch((error) => runtime.logger.error('SERVIDOR', error.message)); });
+  return app;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.loadEnvFile(path.join(ROOT, '.env')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const port = Number(process.env.PORT || 3001);
+  if (process.env.ORBITA_MODO === 'servidor' && !process.env.PAINEL_SENHA) {
+    console.error('\n  No modo servidor o painel fica acessível pela internet.\n  Defina PAINEL_SENHA no arquivo .env antes de iniciar.\n');
+    process.exit(1);
+  }
   const server = createApp();
   server.on('error', (error) => {
     console.error(error.code === 'EADDRINUSE' ? `A porta ${port} está em uso. Experimente PORT=${port + 1} npm start.` : error.message);
@@ -240,6 +278,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   });
   server.listen(port, 'localhost', () => {
     console.log(`\n  Órbita · seu espaço de prospecção\n  Local: http://localhost:${port}`);
+    if (process.env.ORBITA_MODO === 'servidor') console.log('  Modo servidor: acesso pela internet via Caddy (HTTPS), com login.');
+    else if (process.env.PAINEL_SENHA) console.log('  Login com senha ativado (PAINEL_SENHA).');
     console.log('\n  Ctrl+C para encerrar.\n');
   });
   let shuttingDown = false;
