@@ -9,12 +9,13 @@
     "dev": "node --watch server.js",
     "start": "node server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check server.js && node --check enviar.js && node --check google.js && node --check bot/runtime.js && node --check bot/campaign.js && node --check bot/whatsapp.js && node --check bot/logger.js && node --check bot/storage.js && node --check bot/auth.js && node --check web/app.js && node --check web/components.js && node --check web/views.js && node --check web/runtime-views.js"
+    "check": "node --check server.js && node --check enviar.js && node --check google.js && node --check bot/runtime.js && node --check bot/campaign.js && node --check bot/whatsapp.js && node --check bot/logger.js && node --check bot/storage.js && node --check bot/email.js && node --check bot/auth.js && node --check web/app.js && node --check web/components.js && node --check web/views.js && node --check web/runtime-views.js"
   },
   "engines": {
     "node": ">=20.12"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "baileys": "^7.0.0-rc14",
     "pino": "^10.4.0",
     "qrcode-terminal": "^0.12.0"

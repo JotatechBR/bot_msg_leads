@@ -20,16 +20,33 @@ export function googleKey(root) {
   return (match?.[1] ?? match?.[2] ?? match?.[3] ?? process.env.API_GOOGLE_MAPS ?? '').trim();
 }
 
-export function loadTemplates(root) {
-  const text = fs.readFileSync(path.join(root, 'mensagem.txt'), 'utf8');
-  const templates = text.split(/^\s*---\s*$/m).map((item) => item.trim()).filter(Boolean);
+export function parseTemplates(text) {
+  const templates = String(text ?? '').split(/^\s*---\s*$/m).map((item) => item.trim()).filter(Boolean);
   if (!templates.length) throw Object.assign(new Error('Salve uma mensagem antes de iniciar a campanha.'), { status: 400 });
   return templates;
+}
+
+export function loadTemplates(root) {
+  return parseTemplates(fs.readFileSync(path.join(root, 'mensagem.txt'), 'utf8'));
+}
+
+export const basePath = (root, id) => path.join(root, '.orbita', 'bases', `${id}.json`);
+
+// Campanha com base importada: entrega os contatos do nicho pedido, sem consultar o Google.
+export async function* baseLeads(contacts, { termo, jaUsado, signal }) {
+  const wanted = termo.toLowerCase();
+  for (const contact of contacts) {
+    if ((contact.nicho || 'geral').toLowerCase() !== wanted) continue;
+    signal?.throwIfAborted();
+    const lead = { id: `base:${contact.numero}`, nome: contact.nome, telefone: contact.numero };
+    if (!jaUsado(lead)) yield lead;
+  }
 }
 
 export function composeMessage(templates, lead) {
   return templates[Math.floor(Math.random() * templates.length)]
     .replaceAll('{nome}', lead.nome ?? '')
+    .replaceAll('{nicho}', lead.nicho ?? '')
     .replaceAll('{avaliacao}', String(lead.avaliacao ?? '').replace('.', ','))
     .replaceAll('{total_avaliacoes}', String(lead.total_avaliacoes ?? ''));
 }
@@ -86,6 +103,11 @@ export async function executeCampaign({ root, campaign, accounts, whatsapp, logg
     return item;
   }
 
+  if (campaign.type === 'base') {
+    const contacts = readJson(basePath(root, campaign.id), null);
+    if (!Array.isArray(contacts)) throw new Error('A base de contatos desta campanha não foi encontrada. Importe a base novamente.');
+    source = (options) => baseLeads(contacts, options);
+  }
   const sources = campaign.niches.map(makeSource);
   let cursor = 0;
   function round() {

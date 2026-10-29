@@ -4,7 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { BotRuntime } from './bot/runtime.js';
-import { googleKey } from './bot/campaign.js';
+import { googleKey, normalizePhone, basePath } from './bot/campaign.js';
+import { EMAIL_PATTERN, emailSettings } from './bot/email.js';
 import { createAuth } from './bot/auth.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -64,7 +65,7 @@ export function buildLeads(history) {
   }
   const queued = [...found.values()];
   const contacted = Object.entries(companies).map(([id, item]) => ({
-    id, name: item.nome || 'Empresa sem nome', phone: item.numero ?? '',
+    id, name: item.nome || 'Empresa sem nome', phone: item.numero ?? item.email ?? '',
     niche: item.nicho ?? '', city: '', address: '', rating: null, reviews: null, maps: '', social: '',
     status: item.status ?? 'erro', account: item.conta ?? null, date: parseDate(item.data),
   })).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
@@ -72,13 +73,13 @@ export function buildLeads(history) {
 }
 
 function failure(message, status = 400) { return Object.assign(new Error(message), { status }); }
-async function bodyJson(req) {
+async function bodyJson(req, limit = 64 * 1024) {
   if (!req.headers['content-type']?.startsWith('application/json')) throw failure('Envie os dados como JSON.', 415);
   let size = 0;
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 64 * 1024) throw failure('O conteúdo excede o limite de 64 KB.', 413);
+    if (size > limit) throw failure(`O conteúdo excede o limite de ${Math.round(limit / 1024)} KB.`, 413);
     chunks.push(chunk);
   }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
@@ -127,7 +128,7 @@ export function createApp({
       fs.readFile(path.join(root, 'mensagem.txt'), 'utf8').catch((error) => { if (error.code === 'ENOENT') return ''; throw error; }),
     ]);
     const state = runtime.snapshot();
-    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, authRequired: auth.enabled, apiConfigured: Boolean(googleKey(root)), updatedAt: new Date().toISOString() };
+    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, authRequired: auth.enabled, apiConfigured: Boolean(googleKey(root)), emailConfigured: Boolean(emailSettings(root).key && emailSettings(root).from), updatedAt: new Date().toISOString() };
   }
 
   const app = http.createServer(async (req, res) => {
@@ -226,6 +227,57 @@ export function createApp({
           await atomicWrite(draftsPath, JSON.stringify([campaign, ...campaigns], null, 2) + '\n');
         });
         runtime.logger.info('PAINEL', `Campanha preparada: ${campaign.name}.`);
+        return sendJson(201, { campaign });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/campaigns/base') {
+        const body = await bodyJson(req, 2 * 1024 * 1024);
+        if (typeof body.name !== 'string' || body.name.trim().length < 3 || body.name.length > 80) throw failure('Dê um nome à campanha com 3 a 80 caracteres.');
+        const accounts = Number(body.accounts ?? 1);
+        if (!Number.isInteger(accounts) || accounts < 1 || accounts > 5) throw failure('Selecione de 1 a 5 contas.');
+        if (!Array.isArray(body.contacts) || !body.contacts.length) throw failure('A base não tem contatos. Envie um arquivo com nome, número e nicho.');
+        if (body.contacts.length > 5000) throw failure('Cada base aceita até 5.000 contatos. Divida o arquivo em partes.', 413);
+        const channel = body.channel === 'email' ? 'email' : 'whatsapp';
+        let emailSubject = null;
+        if (channel === 'email') {
+          emailSubject = typeof body.emailSubject === 'string' ? body.emailSubject.trim() : '';
+          if (emailSubject.length < 3 || emailSubject.length > 200) throw failure('Informe o assunto do e-mail com 3 a 200 caracteres.');
+          if (typeof body.template !== 'string' || !body.template.trim()) throw failure('Escreva a mensagem do e-mail.');
+        }
+        let template = null;
+        if (body.template != null && String(body.template).trim()) {
+          if (typeof body.template !== 'string' || body.template.trim().length < 10 || body.template.length > 20000) throw failure('A mensagem da campanha precisa ter de 10 a 20.000 caracteres.');
+          if (body.template.split(/^\s*---\s*$/m).some((version) => !version.trim())) throw failure('Preencha todas as versões da mensagem ou remova o separador vazio.');
+          template = body.template.trim();
+        }
+        const seen = new Set();
+        const contacts = [];
+        let invalid = 0;
+        let duplicates = 0;
+        for (const item of body.contacts) {
+          const phone = normalizePhone(item?.numero);
+          const email = String(item?.email ?? '').trim().toLowerCase();
+          const identity = channel === 'email' ? (EMAIL_PATTERN.test(email) && email.length <= 254 ? email : null) : phone;
+          if (!identity) { invalid++; continue; }
+          if (seen.has(identity)) { duplicates++; continue; }
+          seen.add(identity);
+          contacts.push({ nome: String(item.nome ?? '').trim().slice(0, 160), ...(phone ? { numero: phone } : {}), ...(EMAIL_PATTERN.test(email) ? { email } : {}), nicho: String(item.nicho ?? '').trim().slice(0, 160) || 'geral' });
+        }
+        if (!contacts.length) throw failure(channel === 'email' ? 'Nenhum e-mail válido foi encontrado. Confira a coluna email do arquivo.' : 'Nenhum número válido foi encontrado. Use DDD + número, por exemplo 19 99999-9999.');
+        const niches = [...new Map(contacts.map((contact) => [contact.nicho.toLowerCase(), contact.nicho])).values()];
+        const campaign = {
+          id: randomUUID(), type: 'base', channel, name: body.name.trim(), niches, cities: ['Base importada'], accounts: channel === 'email' ? 1 : accounts,
+          ...(emailSubject ? { emailSubject } : {}),
+          ...(template ? { template } : {}), base: { total: contacts.length, invalid, duplicates },
+          status: 'rascunho', createdAt: new Date().toISOString(),
+        };
+        await write(async () => {
+          const campaigns = await jsonFile(draftsPath, []);
+          if (campaigns.length >= 200) throw failure('O limite de 200 rascunhos foi atingido.', 409);
+          await atomicWrite(basePath(root, campaign.id), JSON.stringify(contacts) + '\n');
+          await atomicWrite(draftsPath, JSON.stringify([campaign, ...campaigns], null, 2) + '\n');
+        });
+        runtime.logger.info('PAINEL', `Base importada para ${campaign.name}: ${contacts.length} contatos (${invalid} inválidos, ${duplicates} repetidos).`);
         return sendJson(201, { campaign });
       }
 

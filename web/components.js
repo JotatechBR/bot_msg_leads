@@ -45,6 +45,7 @@ export const number = (value) => new Intl.NumberFormat('pt-BR').format(value ?? 
 export const titleCase = (text) => String(text || '').replace(/(^|\s)\p{L}/gu, (letter) => letter.toLocaleUpperCase('pt-BR')).replace(/\bSp\b/g, 'SP');
 export const dateLabel = (date, options = {}) => date ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'America/Sao_Paulo', ...options }).format(new Date(date)) : 'Sem registro';
 export const phoneLabel = (phone) => {
+  if (String(phone ?? '').includes('@')) return String(phone);
   const digits = String(phone ?? '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '');
   return digits.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3') || 'Não informado';
 };

@@ -1,5 +1,5 @@
 import { h, icon, number, titleCase, dateLabel, phoneLabel, badge, companyAvatar, messagePreview } from './components.js';
-import { routes, navigation, overviewView, leadsView, leadResults, campaignsView, messagesView, accountsView, settingsView, guideView } from './views.js';
+import { routes, navigation, overviewView, leadsView, leadResults, campaignsView, basePreview, messagesView, accountsView, settingsView, guideView } from './views.js';
 import { runtimeLogs } from './runtime-views.js';
 
 const main = document.querySelector('#main');
@@ -137,6 +137,49 @@ function updateSelection() {
   if (exportButton) exportButton.innerHTML = `${icon('download')}${state.selected.size ? `Exportar ${state.selected.size} selecionado(s)` : 'Exportar CSV'}`;
 }
 
+const onCampaignForm = () => ['#campaigns/new', '#campaigns/base'].includes(location.hash);
+
+// Lê a base (CSV/TSV/texto colado). Sem cabeçalho reconhecido, assume as colunas nome, número, nicho.
+function parseBase(text) {
+  const clean = text.replace(/^﻿/, '').split(/\r?\n/).filter((line) => line.trim());
+  if (!clean.length) return [];
+  const first = clean[0];
+  const delimiter = [';', '\t', ','].map((char) => [char, first.split(char).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const split = (line) => {
+    const cells = [];
+    let cell = '';
+    let quoted = false;
+    for (let index = 0; index < line.length; index++) {
+      const char = line[index];
+      if (char === '"') { if (quoted && line[index + 1] === '"') { cell += '"'; index++; } else quoted = !quoted; }
+      else if (char === delimiter && !quoted) { cells.push(cell.trim()); cell = ''; }
+      else cell += char;
+    }
+    return [...cells, cell.trim()];
+  };
+  const normalize = (value) => value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+  const names = { email: ['email', 'mail', 'emailcontato'], nome: ['nome', 'name', 'empresa', 'cliente', 'contato'], numero: ['numero', 'telefone', 'celular', 'whatsapp', 'fone', 'phone', 'tel'], nicho: ['nicho', 'segmento', 'categoria', 'tipo', 'ramo'] };
+  const header = split(first).map(normalize);
+  const columns = Object.fromEntries(Object.entries(names).map(([key, options]) => [key, header.findIndex((cell) => options.includes(cell))]));
+  const hasHeader = columns.numero >= 0 || columns.email >= 0;
+  const index = hasHeader ? columns : { nome: 0, numero: 1, nicho: 2, email: -1 };
+  return (hasHeader ? clean.slice(1) : clean).map(split).map((cells) => ({
+    nome: cells[index.nome] ?? '', numero: cells[index.numero] ?? '', email: cells[index.email] ?? '', nicho: index.nicho >= 0 ? cells[index.nicho] ?? '' : '',
+  })).filter((contact) => contact.numero || contact.email || contact.nome);
+}
+
+let baseContacts = [];
+function updateBasePreview(text) {
+  baseContacts = parseBase(text);
+  document.querySelector('#base-preview').innerHTML = basePreview(baseContacts);
+}
+
+async function readBaseFile(file) {
+  const buffer = await file.arrayBuffer();
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
+  catch { return new TextDecoder('windows-1252').decode(buffer); }
+}
+
 function currentRoute() {
   const hash = location.hash.slice(1).split('/')[0];
   return routes.some((route) => route.id === hash) || hash === 'guide' ? hash : 'overview';
@@ -159,13 +202,14 @@ function render({ animate = false, focus = false } = {}) {
   const views = {
     overview: () => overviewView(state.data, state),
     leads: () => leadsView(state.data, state, filteredLeads()),
-    campaigns: () => campaignsView(state.data, location.hash === '#campaigns/new'),
+    campaigns: () => campaignsView(state.data, { '#campaigns/new': 'new', '#campaigns/base': 'base' }[location.hash]),
     messages: () => messagesView({ ...state.data, template: state.messageDraft ?? state.data.template }),
     accounts: () => accountsView(state.data),
     settings: () => settingsView(state.data),
     guide: guideView,
   };
   main.innerHTML = views[state.route]();
+  if (document.querySelector('#base-form')) baseContacts = [];
   if (state.data.readOnly) {
     main.insertAdjacentHTML('afterbegin', `<div class="notice notice-soft">${icon('info')}<p>Painel publicado para consulta. Para editar, conectar WhatsApp e enviar campanhas, abra a versão local com <code>npm start</code>.</p></div>`);
     for (const button of main.querySelectorAll('[data-connect-account], [data-disconnect-account], [data-start-campaign], [data-stop-campaign], button[type="submit"]')) button.disabled = true;
@@ -201,7 +245,7 @@ function applyRuntime(runtime, force = false) {
   const oldSignature = runtimeSignature;
   state.data.runtime = runtime;
   state.data.accounts = runtime.accounts;
-  const editable = location.hash === '#campaigns/new' || state.route === 'messages';
+  const editable = onCampaignForm() || state.route === 'messages';
   if (!editable && ['accounts', 'campaigns'].includes(state.route) && (force || oldSignature !== signature(runtime))) {
     const focused = document.activeElement;
     const attributes = ['data-connect-account', 'data-disconnect-account', 'data-start-campaign', 'data-stop-campaign'];
@@ -292,9 +336,9 @@ async function refresh({ initial = false, manual = false } = {}) {
     serverStatus(true);
     const existing = new Set(state.data.leads.map((lead) => lead.id));
     state.selected = new Set([...state.selected].filter((id) => existing.has(id)));
-    const readOnlyView = ['overview', 'accounts', 'leads', 'campaigns'].includes(state.route) && location.hash !== '#campaigns/new';
+    const readOnlyView = ['overview', 'accounts', 'leads', 'campaigns'].includes(state.route) && !onCampaignForm();
     if (initial || (readOnlyView && !document.querySelector('#lead-dialog').open)) render({ animate: initial });
-    else if (manual && state.route !== 'messages' && location.hash !== '#campaigns/new') {
+    else if (manual && state.route !== 'messages' && !onCampaignForm()) {
       const searchFocused = document.activeElement?.id === 'lead-search';
       const selection = searchFocused ? document.activeElement.selectionStart : null;
       render();
@@ -475,6 +519,7 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('input', (event) => {
   const input = event.target;
+  if (input.id === 'base-paste') updateBasePreview(input.value);
   if (input.id === 'lead-search') { state.query = input.value; state.page = 1; updateResults(); }
   if (input.id === 'message-text') {
     state.messageDraft = input.value === state.data.template ? null : input.value;
@@ -500,6 +545,18 @@ document.addEventListener('change', (event) => {
     updateResults();
     [...document.querySelectorAll('.lead-checkbox')].find((checkbox) => checkbox.dataset.id === checkedId)?.focus({ preventScroll: true });
   }
+  if (input.id === 'base-channel') {
+    const email = input.value === 'email';
+    document.querySelector('#base-email-fields').hidden = !email;
+    document.querySelector('#base-accounts-field').hidden = email;
+    document.querySelector('#base-template-hint').textContent = email ? '(corpo do e-mail)' : '(opcional)';
+    document.querySelector('#base-subject').required = email;
+    document.querySelector('#base-template').required = email;
+  }
+  if (input.id === 'base-file' && input.files[0]) {
+    readBaseFile(input.files[0]).then((text) => { document.querySelector('#base-paste').value = ''; updateBasePreview(text); })
+      .catch(() => toast('Não foi possível ler o arquivo.'));
+  }
   if (input.id === 'overview-filter') { state.overviewFilter = input.value; render(); document.querySelector('#overview-filter').focus({ preventScroll: true }); }
   if (input.id === 'chart-period') { state.chartPeriod = Number(input.value); render(); document.querySelector('#chart-period').focus({ preventScroll: true }); }
   if (input.id === 'preview-lead' || input.id === 'preview-version') updatePreview();
@@ -518,7 +575,7 @@ document.addEventListener('submit', async (event) => {
     await submitLogin(form);
     return;
   }
-  if (!['campaign-form', 'message-form'].includes(form.id)) return;
+  if (!['campaign-form', 'base-form', 'message-form'].includes(form.id)) return;
   event.preventDefault();
   const button = form.querySelector('button[type="submit"]');
   if (button.disabled) return;
@@ -538,6 +595,16 @@ document.addEventListener('submit', async (event) => {
       form.reset();
       location.hash = '#campaigns';
       toast('Campanha salva. Seu próximo passo já tem um lugar.');
+    } else if (form.id === 'base-form') {
+      const values = new FormData(form);
+      if (!baseContacts.length) throw new Error('Envie um arquivo ou cole a lista de contatos antes de importar.');
+      const result = await request('/api/campaigns/base', { method: 'POST', body: JSON.stringify({ name: values.get('name'), accounts: Number(values.get('accounts')), channel: values.get('channel'), emailSubject: values.get('emailSubject'), template: values.get('template'), contacts: baseContacts }) });
+      const { total, invalid, duplicates } = result.campaign.base;
+      state.data.campaigns.unshift(result.campaign);
+      baseContacts = [];
+      form.reset();
+      location.hash = '#campaigns';
+      toast(`Base importada: ${number(total)} contatos${invalid || duplicates ? ` (${number(invalid)} inválidos e ${number(duplicates)} repetidos descartados)` : ''}.`);
     } else {
       const text = form.querySelector('textarea').value;
       await request('/api/template', { method: 'PUT', body: JSON.stringify({ text }) });
@@ -590,7 +657,7 @@ window.addEventListener('beforeunload', (event) => {
 });
 setInterval(() => {
   const usingControl = main.contains(document.activeElement) && document.activeElement.matches('input, textarea, select, button, a');
-  if (!document.hidden && ['overview', 'accounts', 'leads', 'campaigns'].includes(state.route) && location.hash !== '#campaigns/new' && !document.querySelector('#lead-dialog').open && !usingControl) refresh();
+  if (!document.hidden && ['overview', 'accounts', 'leads', 'campaigns'].includes(state.route) && !onCampaignForm() && !document.querySelector('#lead-dialog').open && !usingControl) refresh();
 }, 30000);
 document.querySelector('#navigation').innerHTML = navigation(null, currentRoute());
 refresh({ initial: true });

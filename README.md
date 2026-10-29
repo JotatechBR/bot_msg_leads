@@ -77,6 +77,20 @@ Abra o endereço da Vercel, entre com a senha, vá em **Contas WhatsApp → Cone
 
 A interface lê `historico.json`; o motor da campanha atualiza esse arquivo durante as buscas e os envios, com gravação atômica. Empresas e telefones já contatados são retirados da lista de oportunidades disponíveis. Registros antigos sem nicho, conta ou avaliação mostram a informação como ausente.
 
+## Campanha a partir de uma base (WhatsApp ou e-mail)
+
+Em **Campanhas** ou **Explorar leads**, clique em **Importar base** e envie um `.csv`/`.txt` (ou cole a lista) com as colunas `nome`, `numero`, `email` e `nicho`. Em **Enviar por**, escolha WhatsApp ou E-mail. Números e e-mails inválidos ou repetidos são descartados, e quem já foi contatado não recebe de novo. Cada base aceita até 5.000 contatos e pode ter uma mensagem própria (`{nome}`, `{nicho}`).
+
+Para e-mail, o envio usa o SendGrid e precisa, no `.env`:
+
+```text
+API_KEY_SENDGRID=SG.sua-chave
+EMAIL_REMETENTE=contato@seudominio.com.br   # remetente verificado no SendGrid
+NOME_REMETENTE=Seu Nome                      # opcional
+```
+
+Reinicie o servidor depois de editar o `.env`. A campanha por e-mail não usa contas WhatsApp.
+
 ## Conectar e iniciar uma campanha
 
 1. Inicie o servidor com `npm start` e mantenha esse terminal aberto.
