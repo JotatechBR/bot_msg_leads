@@ -4,8 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { createLogger } from './logger.js';
 import { acquireProjectLock, readJson, writeJson } from './storage.js';
 import { WhatsAppManager } from './whatsapp.js';
-import { emailSettings, executeEmailCampaign } from './email.js';
-import { executeCampaign, googleKey, loadTemplates, parseTemplates, basePath } from './campaign.js';
+import { emailSettings, executeEmailCampaign, sendEmail, EMAIL_PATTERN } from './email.js';
+import { executeCampaign, googleKey, loadTemplates, parseTemplates, basePath, normalizePhone, composeMessage } from './campaign.js';
 
 const fail = (message, status = 409) => Object.assign(new Error(message), { status });
 const BUSY = ['running', 'stopping'];
@@ -144,6 +144,55 @@ export class BotRuntime extends EventEmitter {
       this.persist();
     }
     return this.publicRun(this.active);
+  }
+
+  manualLog() { return readJson(path.join(this.root, '.orbita', 'manuais.json'), []); }
+
+  // Envio avulso (uma mensagem ou um e-mail digitado no painel). Fica registrado em manuais.json e,
+  // com nenhuma campanha rodando, também no histórico, para as campanhas não contatarem a mesma pessoa.
+  async sendManual({ channel, to, name = '', subject = '', text, account }) {
+    if (this.closed) throw fail('O servidor está encerrando.');
+    const lead = { nome: name };
+    const body = composeMessage([text], lead);
+    const entry = { canal: channel, nome: name, destino: '', status: 'enviado', data: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) };
+    let historyId;
+    let historyRecord;
+    if (channel === 'email') {
+      const address = String(to ?? '').trim().toLowerCase();
+      if (!EMAIL_PATTERN.test(address)) throw fail('Informe um e-mail válido.', 400);
+      if (subject.trim().length < 3) throw fail('Informe o assunto do e-mail.', 400);
+      const settings = emailSettings(this.root);
+      if (!settings.key) throw fail('Configure API_KEY_SENDGRID no arquivo .env antes de enviar.', 400);
+      if (!settings.from) throw fail('Configure EMAIL_REMETENTE no arquivo .env com o e-mail remetente verificado no SendGrid.', 400);
+      const subjectText = composeMessage([subject.trim()], lead);
+      await (this.email.send ?? sendEmail)({ ...settings, to: address, subject: subjectText, text: body });
+      Object.assign(entry, { destino: address, assunto: subjectText });
+      historyId = `email:${address}`;
+      historyRecord = { nome: name, nicho: 'manual', email: address, canal: 'email', status: 'enviado' };
+    } else {
+      const phone = normalizePhone(to);
+      if (!phone) throw fail('Informe um número válido, com DDD. Ex.: 19 99999-0000.', 400);
+      if (!/^wa[1-5]$/.test(String(account))) throw fail('Escolha a conta de WhatsApp para enviar.', 400);
+      this.own();
+      const connected = await this.whatsapp.wait(account);
+      const [contact] = (await connected.socket.onWhatsApp(phone)) ?? [];
+      if (!contact?.exists) throw fail('Esse número não tem WhatsApp.', 422);
+      await connected.socket.sendMessage(contact.jid, { text: body });
+      Object.assign(entry, { destino: `+${phone}`, conta: account });
+      historyId = `manual:${phone}`;
+      historyRecord = { nome: name, nicho: 'manual', numero: phone, status: 'enviado', conta: account };
+    }
+    this.logger.success('MANUAL', `${name || entry.destino} · ${entry.destino} · ${channel === 'email' ? 'e-mail' : 'mensagem'} enviado manualmente.`);
+    try {
+      writeJson(path.join(this.root, '.orbita', 'manuais.json'), [entry, ...this.manualLog()].slice(0, 100));
+      if (!this.isBusy()) {
+        const historyPath = path.join(this.root, 'historico.json');
+        const history = readJson(historyPath, { empresas: {}, buscas: {} });
+        if (history.empresas && history.buscas) { history.empresas[historyId] = { ...historyRecord, data: entry.data }; writeJson(historyPath, history); }
+      }
+    } catch (error) { this.logger.error('ARQUIVOS', `O envio foi feito, mas não foi possível registrá-lo: ${error.message}`); }
+    this.emit('change');
+    return entry;
   }
 
   async shutdown() {

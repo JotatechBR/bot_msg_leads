@@ -128,7 +128,7 @@ export function createApp({
       fs.readFile(path.join(root, 'mensagem.txt'), 'utf8').catch((error) => { if (error.code === 'ENOENT') return ''; throw error; }),
     ]);
     const state = runtime.snapshot();
-    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, authRequired: auth.enabled, apiConfigured: Boolean(googleKey(root)), emailConfigured: Boolean(emailSettings(root).key && emailSettings(root).from), updatedAt: new Date().toISOString() };
+    return { ...buildLeads(history), campaigns, template, accounts: state.accounts, runtime: state, liveTransport: published ? 'poll' : 'sse', environment: deployment, readOnly: published, authRequired: auth.enabled, apiConfigured: Boolean(googleKey(root)), manual: runtime.manualLog(), emailConfigured: Boolean(emailSettings(root).key && emailSettings(root).from), updatedAt: new Date().toISOString() };
   }
 
   const app = http.createServer(async (req, res) => {
@@ -279,6 +279,15 @@ export function createApp({
         });
         runtime.logger.info('PAINEL', `Base importada para ${campaign.name}: ${contacts.length} contatos (${invalid} inválidos, ${duplicates} repetidos).`);
         return sendJson(201, { campaign });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/manual') {
+        const body = await bodyJson(req);
+        const channel = body.channel === 'email' ? 'email' : 'whatsapp';
+        const text = typeof body.text === 'string' ? body.text.trim() : '';
+        if (text.length < 2 || text.length > (channel === 'email' ? 20000 : 4096)) throw failure(channel === 'email' ? 'Escreva a mensagem do e-mail (até 20.000 caracteres).' : 'Escreva a mensagem (até 4.096 caracteres).');
+        const entry = await runtime.sendManual({ channel, to: body.to, name: String(body.name ?? '').trim().slice(0, 160), subject: String(body.subject ?? '').slice(0, 200), text, account: body.account });
+        return sendJson(200, { entry });
       }
 
       if (req.method === 'PUT' && url.pathname === '/api/template') {

@@ -63,3 +63,30 @@ test('campanha por e-mail envia pelo SendGrid para os e-mails válidos da base',
   assert.equal(sent.length, 2);
   await app.shutdown();
 });
+
+test('envio manual por WhatsApp e e-mail, com registro e sem repetir em campanhas', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'orbita-'));
+  fs.writeFileSync(path.join(root, '.env'), 'API_KEY_SENDGRID=SG.teste\nEMAIL_REMETENTE=contato@exemplo.com\n');
+  const zap = [];
+  const mails = [];
+  const socket = { onWhatsApp: async (n) => [{ exists: !n.endsWith('0000'), jid: `${n}@s.whatsapp.net` }], sendMessage: async (jid, m) => zap.push([jid, m.text]) };
+  const whatsapp = Object.assign(new (await import('node:events')).EventEmitter(), { list: () => [], wait: async () => ({ id: 'wa1', status: 'connected', socket }), close: async () => {} });
+  const { BotRuntime } = await import('../bot/runtime.js');
+  const runtime = new BotRuntime({ root, whatsapp, email: { send: async (m) => mails.push(m) } });
+  const app = createApp({ root, runtime, deployment: 'local' });
+  await new Promise((r) => app.listen(0, 'localhost', r));
+  const base = `http://localhost:${app.address().port}`;
+  const post = (body) => fetch(`${base}/api/manual`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => [r.status, await r.json()]);
+  assert.equal((await post({ channel: 'whatsapp', to: '123', text: 'Oi', account: 'wa1' }))[0], 400);
+  assert.equal((await post({ channel: 'whatsapp', to: '19 90000-0000', text: 'Oi', account: 'wa1' }))[0], 422);
+  assert.equal((await post({ channel: 'whatsapp', to: '19 99999-1111', name: 'Ana', text: 'Oi {nome}!', account: 'wa1' }))[0], 200);
+  assert.deepEqual(zap, [['5519999991111@s.whatsapp.net', 'Oi Ana!']]);
+  assert.equal((await post({ channel: 'email', to: 'ruim', subject: 'Assunto', text: 'Oi' }))[0], 400);
+  assert.equal((await post({ channel: 'email', to: 'Bia@x.com', name: 'Bia', subject: 'Olá {nome}', text: 'Oi {nome}' }))[0], 200);
+  assert.deepEqual([mails[0].to, mails[0].subject, mails[0].text], ['bia@x.com', 'Olá Bia', 'Oi Bia']);
+  const data = await fetch(`${base}/api/data`).then((r) => r.json());
+  assert.equal(data.manual.length, 2);
+  const history = JSON.parse(fs.readFileSync(path.join(root, 'historico.json'), 'utf8'));
+  assert.ok(history.empresas['email:bia@x.com'] && history.empresas['manual:5519999991111'].numero === '5519999991111');
+  await app.shutdown();
+});

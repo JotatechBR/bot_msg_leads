@@ -1,5 +1,5 @@
 import { h, icon, number, titleCase, dateLabel, phoneLabel, badge, companyAvatar, messagePreview } from './components.js';
-import { routes, navigation, overviewView, leadsView, leadResults, campaignsView, basePreview, messagesView, accountsView, settingsView, guideView } from './views.js';
+import { routes, navigation, overviewView, leadsView, leadResults, campaignsView, basePreview, manualView, manualLog, messagesView, accountsView, settingsView, guideView } from './views.js';
 import { runtimeLogs } from './runtime-views.js';
 
 const main = document.querySelector('#main');
@@ -203,6 +203,7 @@ function render({ animate = false, focus = false } = {}) {
     overview: () => overviewView(state.data, state),
     leads: () => leadsView(state.data, state, filteredLeads()),
     campaigns: () => campaignsView(state.data, { '#campaigns/new': 'new', '#campaigns/base': 'base' }[location.hash]),
+    manual: () => manualView(state.data),
     messages: () => messagesView({ ...state.data, template: state.messageDraft ?? state.data.template }),
     accounts: () => accountsView(state.data),
     settings: () => settingsView(state.data),
@@ -507,6 +508,10 @@ document.addEventListener('click', (event) => {
     state.campaignDraft = Object.fromEntries(new FormData(document.querySelector('#campaign-form')));
     input.focus();
   }
+  if (target.id === 'manual-use-template') {
+    const first = state.data.template.split(/^s*---s*$/m).map((item) => item.trim()).find(Boolean);
+    if (first) document.querySelector('#manual-text').value = first;
+  }
   if (target.dataset.variable) {
     const input = document.querySelector('#message-text');
     const start = input.selectionStart;
@@ -545,6 +550,14 @@ document.addEventListener('change', (event) => {
     updateResults();
     [...document.querySelectorAll('.lead-checkbox')].find((checkbox) => checkbox.dataset.id === checkedId)?.focus({ preventScroll: true });
   }
+  if (input.id === 'manual-channel') {
+    const email = input.value === 'email';
+    document.querySelector('#manual-account-field').hidden = email;
+    document.querySelector('#manual-subject-field').hidden = !email;
+    document.querySelector('#manual-subject').required = email;
+    document.querySelector('#manual-to-label').textContent = email ? 'E-mail' : 'Número com DDD';
+    document.querySelector('#manual-to').placeholder = email ? 'Ex.: nome@empresa.com.br' : 'Ex.: 19 99999-0000';
+  }
   if (input.id === 'base-channel') {
     const email = input.value === 'email';
     document.querySelector('#base-email-fields').hidden = !email;
@@ -575,7 +588,7 @@ document.addEventListener('submit', async (event) => {
     await submitLogin(form);
     return;
   }
-  if (!['campaign-form', 'base-form', 'message-form'].includes(form.id)) return;
+  if (!['campaign-form', 'base-form', 'manual-form', 'message-form'].includes(form.id)) return;
   event.preventDefault();
   const button = form.querySelector('button[type="submit"]');
   if (button.disabled) return;
@@ -595,6 +608,16 @@ document.addEventListener('submit', async (event) => {
       form.reset();
       location.hash = '#campaigns';
       toast('Campanha salva. Seu próximo passo já tem um lugar.');
+    } else if (form.id === 'manual-form') {
+      const values = new FormData(form);
+      button.textContent = 'Enviando…';
+      const result = await request('/api/manual', { method: 'POST', body: JSON.stringify(Object.fromEntries(values)) });
+      (state.data.manual ??= []).unshift(result.entry);
+      document.querySelector('#manual-log').innerHTML = manualLog(state.data.manual);
+      form.elements.to.value = '';
+      form.elements.name.value = '';
+      form.elements.to.focus();
+      toast(result.entry.canal === 'email' ? 'E-mail enviado.' : 'Mensagem enviada.');
     } else if (form.id === 'base-form') {
       const values = new FormData(form);
       if (!baseContacts.length) throw new Error('Envie um arquivo ou cole a lista de contatos antes de importar.');
